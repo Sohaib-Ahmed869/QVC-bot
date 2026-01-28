@@ -1,0 +1,19 @@
+# Qatar Visa Appointment Bot - Dependencies
+
+# Browser automation (undetected)
+nodriver>=0.38
+
+# CAPTCHA solving
+ddddocr>=1.4.11
+httpx>=0.27.0
+
+# Excel handling
+openpyxl>=3.1.2
+
+# Async file operations
+aiofiles>=23.2.1
+
+# Web server (for control panel)
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic[email]>=2.5.0

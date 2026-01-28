@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qatar Visa Bot — Control Panel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2" />
+                        <path d="M10 16L14 20L22 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Qatar Visa Bot</h1>
+                    <span class="tagline">Automated Appointment Booking</span>
+                </div>
+            </div>
+            <div class="status-indicator" id="statusIndicator">
+                <span class="status-dot"></span>
+                <span class="status-text">Idle</span>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-grid">
+            <!-- Left Panel: Applicants -->
+            <section class="panel applicants-panel">
+                <div class="panel-header">
+                    <h2>Applicant Queue</h2>
+                    <button class="btn btn-primary" id="addApplicantBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        Add Applicant
+                    </button>
+                </div>
+
+                <div class="applicants-list" id="applicantsList">
+                    <!-- Cards will be inserted here -->
+                    <div class="empty-state" id="emptyState">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <rect x="6" y="10" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2" />
+                            <path d="M6 18H42" stroke="currentColor" stroke-width="2" />
+                            <circle cx="12" cy="14" r="2" fill="currentColor" />
+                            <circle cx="18" cy="14" r="2" fill="currentColor" />
+                        </svg>
+                        <p>No applicants yet</p>
+                        <span>Add your first applicant to get started</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Schedule & Controls -->
+            <aside class="panel controls-panel">
+                <!-- Schedule Section -->
+                <div class="control-section">
+                    <div class="section-header-row">
+                        <div>
+                            <h3>Weekly Schedule</h3>
+                            <p class="section-desc">Set time windows for automatic execution</p>
+                        </div>
+                        <button class="btn btn-small" id="addDayBtn">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Add Day
+                        </button>
+                    </div>
+
+                    <div class="schedule-days" id="scheduleDays">
+                        <!-- Days will be inserted here dynamically -->
+                    </div>
+
+                    <div class="schedule-empty" id="scheduleEmpty">
+                        <p>No schedule configured</p>
+                        <span>Add a day to set up automatic runs</span>
+                    </div>
+
+                    <div class="schedule-toggle">
+                        <label class="toggle">
+                            <input type="checkbox" id="scheduleEnabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Auto-run during scheduled time</span>
+                    </div>
+                </div>
+
+                <!-- Center Selection -->
+                <div class="control-section">
+                    <h3>Visa Center</h3>
+                    <p class="section-desc">Select the appointment location</p>
+
+                    <div class="center-options">
+                        <label class="radio-card">
+                            <input type="radio" name="center" value="Islamabad" checked>
+                            <div class="radio-card-content">
+                                <span class="radio-check"></span>
+                                <span class="radio-label">Islamabad</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="center" value="Karachi">
+                            <div class="radio-card-content">
+                                <span class="radio-check"></span>
+                                <span class="radio-label">Karachi</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Manual Run -->
+                <div class="control-section">
+                    <h3>Manual Control</h3>
+                    <p class="section-desc">Run the bot immediately</p>
+
+                    <button class="btn btn-run" id="runBotBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M6 4L16 10L6 16V4Z" fill="currentColor" />
+                        </svg>
+                        Run Now
+                    </button>
+
+                    <button class="btn btn-stop hidden" id="stopBotBtn">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <rect x="5" y="5" width="10" height="10" rx="1" fill="currentColor" />
+                        </svg>
+                        Stop
+                    </button>
+                </div>
+
+                <!-- Status Log -->
+                <div class="control-section log-section">
+                    <h3>Activity Log</h3>
+                    <div class="log-container" id="logContainer">
+                        <div class="log-entry">
+                            <span class="log-time">--:--</span>
+                            <span class="log-message">Waiting for activity...</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Modal: Add/Edit Applicant -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal" id="applicantModal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add Applicant</h3>
+                <button class="modal-close" id="modalClose">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 5L15 15M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <form id="applicantForm">
+                <input type="hidden" id="applicantId">
+
+                <div class="form-group">
+                    <label for="passportNumber">Passport Number</label>
+                    <input type="text" id="passportNumber" required placeholder="e.g., AB1234567" pattern="[A-Za-z0-9]+"
+                        maxlength="15">
+                </div>
+
+                <div class="form-group">
+                    <label for="visaNumber">Visa Number</label>
+                    <input type="text" id="visaNumber" required placeholder="e.g., QV2024001">
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile">Mobile Number</label>
+                    <input type="text" id="mobile" required placeholder="00920518439384" pattern="0092\d{10}"
+                        maxlength="14" minlength="14" title="Must be exactly 14 digits: 0092 + 10-digit number">
+                    <span class="input-hint" id="mobileHint">Format: 0092 + 10 digits (e.g., 00920518439384)</span>
+                    <span class="input-error hidden" id="mobileError">Must be exactly 14 digits starting with
+                        0092</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="e.g., user@email.com">
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Applicant</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
