@@ -1,164 +1,122 @@
-# Qatar Visa Center Appointment Bot
+# Qatar Visa Center (QVC) Appointment Bot
 
-Automated appointment booking system for Qatar Visa Center portal.
+A powerful, automated appointment booking system for the Qatar Visa Center portal. Designed with a hybrid architecture that combines browser automation for security and API polling for speed.
 
-## Architecture
+## 🚀 Key Features
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    HYBRID ARCHITECTURE                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────────┐     ┌──────────────┐     ┌─────────────┐ │
-│  │   Phase 1    │     │   Phase 2    │     │   Phase 3   │ │
-│  │   "TANK"     │────▶│   "SNIPER"   │────▶│  "EXECUTE"  │ │
-│  │              │     │              │     │             │ │
-│  │  • Browser   │     │  • Extract   │     │  • Browser  │ │
-│  │  • Login     │     │    session   │     │    clicks   │ │
-│  │  • CAPTCHA   │     │  • API poll  │     │  • Confirm  │ │
-│  │  • Forms     │     │  • 0.5 req/s │     │  • Book     │ │
-│  └──────────────┘     └──────────────┘     └─────────────┘ │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
+-   **🖥️ Web Control Panel**: A modern FastAPI-powered dashboard for managing applicants, monitoring progress, and scheduling runs.
+-   **🕵️ Stealth Browser**: Built on `nodriver` (the next-gen undetected-chromedriver) to bypass advanced bot detection.
+-   **🔄 Proxy Rotation**: Integrated with Data Impulse residential proxies to prevent IP rate-limiting and blocks.
+-   **🤖 Hybrid CAPTCHA**: Uses local OCR (`ddddocr`) for free solving, falling back to `CapSolver` API for complex challenges.
+-   **📅 Automatic Scheduler**: Define specific windows for the bot to run automatically when slots are most likely to appear.
+-   **⚡ Hybrid Architecture**: 
+    -   **Phase 1 (Tank)**: Browser handles login and session initialization.
+    -   **Phase 2 (Sniper)**: Background API polling detects slots with millisecond precision.
+    -   **Phase 3 (Execute)**: Browser takes back control for final confirmation and booking.
 
-## Features
+---
 
-- **Stealth Browser**: Uses `nodriver` (undetected-chromedriver successor)
-- **Hybrid CAPTCHA Solving**: Local OCR (free) → CapSolver API (fallback)
-- **Session Extraction**: Converts browser session to API polling
-- **Smart Slot Detection**: Scans calendar within date range
-- **Sequential Processing**: Handles multiple applicants safely
+## 🛠️ Quick Start
 
-## Installation
+### Prerequisites
+-   Python 3.10 or higher
+-   Chrome/Chromium browser installed
 
+### Installation
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/Sohaib-Ahmed869/QVC-bot.git
+    cd QVC-bot
+    ```
+
+2.  **Create and activate a virtual environment**:
+    ```bash
+    python -m venv .venv
+    # Windows:
+    .venv\Scripts\activate
+    # Linux/Mac:
+    source .venv/bin/activate
+    ```
+
+3.  **Install dependencies**:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+---
+
+## 🌐 Web Control Panel
+
+The easiest way to manage your bot is through the Web Dashboard.
+
+### Running the Server
 ```bash
-# Clone/download the project
-cd visa_bot
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Or manually:
-pip install nodriver ddddocr httpx openpyxl aiofiles
+python web_server.py
 ```
+Open **`http://localhost:8000`** in your browser.
 
-## Configuration
+### Dashboard Features
+-   **Applicant Management**: Add, edit, or delete applicants via a clean UI.
+-   **Real-time Monitoring**: Watch the bot's logs and progress in real-time.
+-   **Visual Scheduler**: Configure "Daily" or "Specific Day" windows for automatic execution.
+-   **Proxy Stats**: Monitor your Data Impulse IP rotations and usage stats directly.
 
-Edit `config.py` to set:
+---
 
-```python
-# Date range for appointments
-DATE_RANGE_START = date(2025, 2, 1)
-DATE_RANGE_END = date(2025, 3, 31)
+## ⌨️ CLI Usage
 
-# Your CapSolver API key (fallback for CAPTCHA)
-CAPSOLVER_API_KEY = "CAP-XXXXXX"
+For power users who prefer the terminal.
 
-# Polling interval (don't go below 2s)
-POLL_INTERVAL = 2.0
-```
-
-## Usage
-
-### 1. Create Excel Template
-
+### Generate Template
+Create a sample `applicants.xlsx` file:
 ```bash
 python main.py --create-template
 ```
 
-This creates `applicants.xlsx` with columns:
-- Country
-- Passport Number
-- Visa Number
-- Primary Mobile
-- Primary Email
-
-### 2. Fill Applicant Data
-
-Open `applicants.xlsx` and add your applicants.
-
-### 3. Run the Bot
-
+### Run the Bot
 ```bash
-# Default settings (dates from config.py)
+# Basic run (using dates from config.py)
 python main.py
 
-# Custom date range
-python main.py --start 2025-02-01 --end 2025-03-31
+# Custom date range & headless mode
+python main.py --start 2025-02-01 --end 2025-03-31 --headless
 
-# Custom Excel file
-python main.py --excel my_applicants.xlsx
-
-# Headless mode (no browser UI)
-python main.py --headless
-
-# Browser-only mode (no API polling)
-python main.py --browser-only
-
-# Full example
-python main.py -e applicants.xlsx -s 2025-02-01 -n 2025-03-31 --headless
+# custom Excel file
+python main.py --excel my_list.xlsx
 ```
 
-## File Structure
+**Common Arguments:**
+-   `-e, --excel`: Path to applicant Excel file.
+-   `-s, --start`: Start date (YYYY-MM-DD).
+-   `-n, --end`: End date (YYYY-MM-DD).
+-   `--headless`: Run browser without showing the window.
 
-```
-visa_bot/
-├── config.py           # Settings and selectors
-├── captcha_solver.py   # ddddocr + CapSolver hybrid
-├── browser_engine.py   # nodriver automation
-├── slot_monitor.py     # API polling (Sniper phase)
-├── data_handler.py     # Excel processing
-├── main.py             # Orchestration
-├── requirements.txt    # Dependencies
-└── applicants.xlsx     # Input data
-```
+---
 
-## Troubleshooting
+## ⚙️ Configuration (`config.py`)
 
-### CAPTCHA Fails Repeatedly
-1. Check CapSolver balance at capsolver.com
-2. Ensure API key in config.py is correct
-3. Try refreshing CAPTCHA manually in visible mode
+Key settings you should be aware of:
 
-### "No Slots Found"
-1. The portal genuinely has no availability
-2. Expand your date range
-3. Check if logged in successfully (look at screenshots)
+-   **`DATE_RANGE`**: Default window for slot searching.
+-   **`CAPSOLVER_API_KEY`**: Required for fallback CAPTCHA solving if local OCR fails.
+-   **`PROXY_SETTINGS`**: Enter your Data Impulse `USERNAME` and `PASSWORD` here.
+-   **`POLL_INTERVAL`**: How often to check for slots (Default: 2.0s).
 
-### Session Extraction Fails
-1. Run without `--headless` to observe
-2. Check for additional verification steps
-3. Use `--browser-only` mode as fallback
+---
 
-### Rate Limited
-1. Increase `POLL_INTERVAL` in config.py
-2. Use residential proxy (not implemented in base version)
+## 📂 Project Structure
 
-## Extending
+-   `config.py`: Central hub for settings and CSS selectors.
+-   `web_server.py`: FastAPI backend for the web dashboard.
+-   `browser_engine.py`: Core logic for browser automation (`nodriver`).
+-   `slot_monitor.py`: The "Sniper" - fast API-based slot detection.
+-   `proxy_manager.py`: Rotation logic for residential proxies.
+-   `captcha_solver.py`: Logic for solving portal challenges.
+-   `data_handler.py`: Handles Excel and JSON applicant storage.
+-   `web/`: Frontend assets (HTML, JS, CSS) for the dashboard.
 
-### Add Proxy Rotation
-```python
-# In browser_engine.py start()
-self.browser = await uc.start(
-    browser_args=[
-        f"--proxy-server={proxy_url}",
-        ...
-    ]
-)
-```
+---
 
-### Add Telegram Notifications
-```python
-# After successful booking in main.py
-import httpx
-async def notify(message):
-    await httpx.AsyncClient().post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        json={"chat_id": CHAT_ID, "text": message}
-    )
-```
+## ⚖️ Legal Notice
 
-## Legal Notice
-
-This tool is for educational purposes. Ensure compliance with the target website's Terms of Service. The authors are not responsible for misuse.
+This tool is for educational purposes only. Automated interaction with the QVC portal may violate their Terms of Service. The authors are not responsible for any account bans or legal issues arising from the use of this software. Use responsibly and at your own risk.
