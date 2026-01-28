@@ -1,9 +1,11 @@
-"""
-Configuration for Qatar Visa Center Appointment Bot
-"""
+import os
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Optional
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 @dataclass
 class Config:
@@ -30,14 +32,14 @@ class Config:
   
     HEADLESS: bool = False  # Set True for production
     
-    # Proxy settings (Data Impulse)
-    PROXY_ENABLED: bool = True
-    PROXY_HOST: str = "gw.dataimpulse.com"
-    PROXY_PORT: int = 823
-    PROXY_USERNAME: str = "ae206a2856858352a07d"
-    PROXY_PASSWORD: str = "6ba37afbeb191eb3"
-    PROXY_STICKY_MINS: int = 10
-    PROXY_MAX_ROTATIONS: int = 30
+    # Proxy settings (Data Impulse) - Loaded from .env
+    PROXY_ENABLED: bool = os.getenv("PROXY_ENABLED", "False").lower() == "true"
+    PROXY_HOST: str = os.getenv("PROXY_HOST", "gw.dataimpulse.com")
+    PROXY_PORT: int = int(os.getenv("PROXY_PORT", "823"))
+    PROXY_USERNAME: str = os.getenv("PROXY_USERNAME", "")
+    PROXY_PASSWORD: str = os.getenv("PROXY_PASSWORD", "")
+    PROXY_STICKY_MINS: int = int(os.getenv("PROXY_STICKY_MINS", "10"))
+    PROXY_MAX_ROTATIONS: int = int(os.getenv("PROXY_MAX_ROTATIONS", "30"))
     
     # Logging
     LOG_FILE: str = "visa_bot.log"
