@@ -11,7 +11,7 @@ class CaptchaSolver:
     def __init__(self, capsolver_api_key: str):
         self.capsolver_api_key = capsolver_api_key
         self.ocr = None
-        self._client = None  # Reusable HTTP client for connection pooling
+        self._client = None  
         self._init_local_ocr()
     
     async def _get_client(self) -> httpx.AsyncClient:
@@ -91,7 +91,7 @@ class CaptchaSolver:
                 return solution.get("text")
             
             # Poll for result
-            for _ in range(30):  # Max 30 attempts
+            for _ in range(30):  
                 await asyncio.sleep(1)
                 result_response = await client.post(
                     "https://api.capsolver.com/getTaskResult",

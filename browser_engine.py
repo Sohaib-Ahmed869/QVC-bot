@@ -987,7 +987,7 @@ console.log('Proxy auth extension loaded');
                         await asyncio.sleep(2)
                     continue  # Retry
                 
-                # Step 3: Hunt for slot
+                # Step 3: Hunt for slot (DETECTION MODE)
                 slot = await self.find_available_slot(
                     start_date=start_date,
                     end_date=end_date,
@@ -997,37 +997,30 @@ console.log('Proxy auth extension loaded');
                 )
                 
                 if not slot:
-                    logger.error("No available slots found within time limit")
-                    # Timeout is not an IP issue - don't rotate, just fail
+                    logger.info("=" * 60)
+                    logger.info("⏰ SCHEDULE WINDOW COMPLETED - No slots detected")
+                    logger.info(f"Applicant: {applicant.passport_number}")
+                    logger.info(f"Searched: {start_date} to {end_date}")
+                    logger.info(f"Center: {center}")
+                    logger.info("=" * 60)
+                    # Timeout is not an error - just no slots available in scheduled time
                     return False
                 
                 slot_date, slot_time = slot
-                logger.info(f"Selected slot: {slot_date} at {slot_time}")
                 
-                # Step 4: Confirm booking
-                if not await self.confirm_booking():
-                    logger.error("Booking confirmation failed")
-                    
-                    # This could be a race condition (slot taken)
-                    # Retry from slot selection if possible
-                    if retry < max_full_retries - 1:
-                        logger.info("Confirmation failed - retrying from beginning...")
-                        await self.page.get(config.BASE_URL)
-                        await asyncio.sleep(2)
-                    continue  # Retry
-                
-                # SUCCESS!
+                # SUCCESS - SLOT DETECTED! (Detection mode - no booking)
                 logger.info("=" * 60)
-                logger.info("BOOKING SUCCESSFUL!")
+                logger.info("🎉 SLOT DETECTION SUCCESSFUL!")
                 logger.info(f"Applicant: {applicant.passport_number}")
-                logger.info(f"Appointment: {slot_date} at {slot_time}")
+                logger.info(f"Detected date: {slot_date}")
                 logger.info(f"Center: {center}")
+                logger.info("✓ Detection complete - browser will close")
                 logger.info("=" * 60)
                 
                 return True
                 
             except Exception as e:
-                logger.error(f"Booking attempt {retry + 1} failed with exception: {e}")
+                logger.error(f"Detection attempt {retry + 1} failed with exception: {e}")
                 import traceback
                 traceback.print_exc()
                 
@@ -1042,7 +1035,7 @@ console.log('Proxy auth extension loaded');
                 if retry < max_full_retries - 1:
                     await asyncio.sleep(3)
         
-        logger.error(f"All {max_full_retries} booking attempts failed for {applicant.passport_number}")
+        logger.error(f"All {max_full_retries} detection attempts failed for {applicant.passport_number}")
         return False
     
 

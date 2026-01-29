@@ -1,15 +1,10 @@
-/**
- * Qatar Visa Bot - Web Control Panel
- * Frontend JavaScript Application
- */
-
-const API_BASE = '';  // Same origin
+const API_BASE = '';
 
 // State
 let applicants = [];
 let schedule = {
     enabled: true,
-    days: []  // Array of { day: 'Monday', slots: [{ start: '09:00', end: '17:00' }] }
+    days: []
 };
 let selectedCenter = 'Islamabad';
 let isRunning = false;
@@ -26,9 +21,6 @@ const statusIndicator = document.getElementById('statusIndicator');
 const logContainer = document.getElementById('logContainer');
 const toastContainer = document.getElementById('toastContainer');
 
-// ============================================
-// Initialization
-// ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
     loadApplicants();
@@ -86,9 +78,6 @@ function setupEventListeners() {
     });
 }
 
-// ============================================
-// API Functions
-// ============================================
 
 async function loadApplicants() {
     try {
@@ -385,16 +374,27 @@ function removeSlot(dayIndex, slotIndex) {
     saveSchedule();
 }
 
+// Debounce helper - wait for user to stop making changes before saving
+let saveScheduleTimeout = null;
+
 async function saveSchedule() {
-    try {
-        await fetch(`${API_BASE}/api/schedule`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(schedule)
-        });
-    } catch (error) {
-        localStorage.setItem('schedule', JSON.stringify(schedule));
+    // Clear any pending save
+    if (saveScheduleTimeout) {
+        clearTimeout(saveScheduleTimeout);
     }
+
+    // Wait 500ms after last change before actually saving
+    saveScheduleTimeout = setTimeout(async () => {
+        try {
+            await fetch(`${API_BASE}/api/schedule`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(schedule)
+            });
+        } catch (error) {
+            localStorage.setItem('schedule', JSON.stringify(schedule));
+        }
+    }, 500);
 }
 
 function loadCenter() {
@@ -547,9 +547,6 @@ function createApplicantCard(applicant, index) {
     return card;
 }
 
-// ============================================
-// Modal Functions
-// ============================================
 
 function openModal(applicant = null) {
     modalTitle.textContent = applicant ? 'Edit Applicant' : 'Add Applicant';
@@ -602,9 +599,6 @@ async function handleFormSubmit(e) {
     }
 }
 
-// ============================================
-// Status & Logging
-// ============================================
 
 function updateStatusIndicator(status) {
     statusIndicator.className = 'status-indicator';
@@ -770,9 +764,6 @@ function isInScheduledWindow() {
     return false;
 }
 
-// ============================================
-// Utility Functions
-// ============================================
 
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -805,9 +796,6 @@ function generateId() {
     return 'app_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// ============================================
-// Phone Validation - Exact 14-digit format
-// ============================================
 
 function isValidMobile(phone) {
     // Must be exactly 14 digits starting with 0092
@@ -826,7 +814,7 @@ function validateMobileInput(e) {
     if (digitsOnly !== value) {
         input.value = digitsOnly;
     }
-
+    z
     // Validate
     if (value.length === 0) {
         // Empty - show hint

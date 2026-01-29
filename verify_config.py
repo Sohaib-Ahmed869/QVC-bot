@@ -10,6 +10,10 @@ def verify():
     pwd = config.PROXY_PASSWORD
     masked_pwd = pwd[:2] + "*" * (len(pwd) - 4) + pwd[-2:] if len(pwd) > 4 else "****"
     print(f"Proxy Pass:    {masked_pwd}")
+    # CapSolver Masking
+    capsolver = config.CAPSOLVER_API_KEY
+    masked_capsolver = capsolver[:4] + "*" * (len(capsolver) - 8) + capsolver[-4:] if len(capsolver) > 8 else "****"
+    print(f"CapSolver Key: {masked_capsolver}")
     print(f"Sticky Mins:   {config.PROXY_STICKY_MINS}")
     print(f"Max Rotations: {config.PROXY_MAX_ROTATIONS}")
     print("==========================")

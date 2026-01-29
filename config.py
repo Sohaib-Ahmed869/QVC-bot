@@ -20,8 +20,8 @@ class Config:
     # File paths
     EXCEL_PATH: str = "applicants.xlsx"
     
-    # CapSolver API (fallback)
-    CAPSOLVER_API_KEY: str = "CAP-978F1FAE90847145128AAA"  
+    # CapSolver API (fallback) - Loaded from .env
+    CAPSOLVER_API_KEY: str = os.getenv("CAPSOLVER_API_KEY", "")
     
     # Timing settings
     CAPTCHA_MAX_RETRIES: int = 3
@@ -40,6 +40,10 @@ class Config:
     PROXY_PASSWORD: str = os.getenv("PROXY_PASSWORD", "")
     PROXY_STICKY_MINS: int = int(os.getenv("PROXY_STICKY_MINS", "10"))
     PROXY_MAX_ROTATIONS: int = int(os.getenv("PROXY_MAX_ROTATIONS", "30"))
+    
+    # Session rotation settings (to avoid IP blocking)
+    SESSION_DURATION_MINUTES: int = 5      # How long each browser session runs before rotating
+    SESSION_GAP_SECONDS: int = 15          # Delay between closing and starting new session
     
     # Logging
     LOG_FILE: str = "visa_bot.log"
@@ -63,7 +67,7 @@ class Selectors:
     LANGUAGE_DROPDOWN_TRIGGER = "input[placeholder='-- Select Language --']"
     LANGUAGE_DROPDOWN_ARROW = "div.holder.dropdown-toggle"
     LANGUAGE_DROPDOWN_MENU = "ul.dropdown-menu.show"
-    LANGUAGE_OPTION_ENGLISH = "ul.dropdown-menu.show li a"  # First <a> is English
+    LANGUAGE_OPTION_ENGLISH = "ul.dropdown-menu.show li a"  
     
     # Country dropdown (appears after language selection)
     COUNTRY_DROPDOWN_TRIGGER = "input[placeholder='-- Select Country --']"

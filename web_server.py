@@ -41,9 +41,6 @@ logger.addHandler(file_handler)
 # Also add file handler to root logger for other modules
 logging.getLogger().addHandler(file_handler)
 
-# ============================================
-# Data Models
-# ============================================
 
 class ApplicantCreate(BaseModel):
     passport_number: str = Field(..., min_length=5, max_length=15)
@@ -166,6 +163,73 @@ class BotRunner:
         new_logs = self.logs[cursor:]
         return new_logs, len(self.logs)
     
+    def _calculate_remaining_schedule_time(self) -> int:
+        """
+        Calculate remaining time in current schedule window (in seconds).
+        Returns default of 3600 (1 hour) if no active schedule or cannot determine.
+        """
+        DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        DEFAULT_DURATION = 3600  # 1 hour fallback
+        
+        try:
+            data = load_data()
+            schedule = data.get("schedule", {})
+            
+            if not schedule.get("enabled", False):
+                return DEFAULT_DURATION
+            
+            days = schedule.get("days", [])
+            if not days:
+                return DEFAULT_DURATION
+            
+            now = datetime.now()
+            current_minutes = now.hour * 60 + now.minute
+            current_day_name = DAYS_OF_WEEK[now.weekday()]
+            
+            for day_data in days:
+                day_name = day_data.get("day", "")
+                if day_name != current_day_name and day_name != "Daily":
+                    continue
+                
+                for slot in day_data.get("slots", []):
+                    start_time = slot.get("start", "09:00")
+                    end_time = slot.get("end", "17:00")
+                    
+                    start_h, start_m = map(int, start_time.split(":"))
+                    end_h, end_m = map(int, end_time.split(":"))
+                    
+                    start_minutes = start_h * 60 + start_m
+                    end_minutes = end_h * 60 + end_m
+                    
+                    # Check if we're currently in this window
+                    in_window = False
+                    if end_minutes < start_minutes:
+                        # Overnight schedule (e.g., 22:00 - 02:00)
+                        if current_minutes >= start_minutes:
+                            # Before midnight - time until midnight + end time
+                            remaining_mins = (24 * 60 - current_minutes) + end_minutes
+                            in_window = True
+                        elif current_minutes < end_minutes:
+                            # After midnight - time until end
+                            remaining_mins = end_minutes - current_minutes
+                            in_window = True
+                    else:
+                        # Normal schedule (e.g., 09:00 - 17:00)
+                        if start_minutes <= current_minutes < end_minutes:
+                            remaining_mins = end_minutes - current_minutes
+                            in_window = True
+                    
+                    if in_window:
+                        remaining_secs = remaining_mins * 60
+                        logger.info(f"Schedule window ends at {end_time}, {remaining_mins} min remaining")
+                        return max(remaining_secs, 300)  # Minimum 5 minutes
+            
+            return DEFAULT_DURATION
+            
+        except Exception as e:
+            logger.error(f"Error calculating schedule time: {e}")
+            return DEFAULT_DURATION
+    
     async def run(self, center: str = "Islamabad"):
         """Run the bot for all pending applicants"""
         # Use lock to prevent race condition
@@ -200,78 +264,141 @@ class BotRunner:
                         break
                 save_data(data)
                 
-                # Import and run the actual bot
-                try:
-                    from browser_engine import BrowserEngine
-                    from datetime import date
-                    from config import config, Applicant as ConfigApplicant
+                # Import dependencies
+                from browser_engine import BrowserEngine
+                from datetime import date
+                from config import config, Applicant as ConfigApplicant
+                
+                # Create applicant object for the bot
+                app_obj = ConfigApplicant(
+                    country=applicant["country"],
+                    passport_number=applicant["passport_number"],
+                    visa_number=applicant["visa_number"],
+                    mobile=applicant["mobile"],
+                    email=applicant["email"],
+                    row_index=0
+                )
+                
+                # Get proxy manager (shared across sessions)
+                proxy_mgr = self._get_proxy_manager()
+                
+                # Rotate IP if not first applicant
+                if proxy_mgr and applicants.index(applicant) > 0:
+                    self.add_log("Rotating IP for new applicant...")
+                    await proxy_mgr.rotate(reason="new_applicant")
+                
+                # ============================================
+                # SESSION ROTATION LOOP
+                # Run multiple short sessions until:
+                # - Slot is found, OR
+                # - Schedule window ends, OR
+                # - User stops the bot
+                # ============================================
+                session_num = 0
+                slot_found = False
+                session_duration_secs = config.SESSION_DURATION_MINUTES * 60
+                
+                while not self._stop_requested:
+                    session_num += 1
                     
-                    # Create applicant object for the bot
-                    app_obj = ConfigApplicant(
-                        country=applicant["country"],
-                        passport_number=applicant["passport_number"],
-                        visa_number=applicant["visa_number"],
-                        mobile=applicant["mobile"],
-                        email=applicant["email"],
-                        row_index=0
-                    )
+                    # Calculate remaining time in schedule window
+                    remaining_time = self._calculate_remaining_schedule_time()
                     
-                    # Create and start browser directly
-                    proxy_mgr = self._get_proxy_manager()
-                    self._browser = BrowserEngine(proxy_manager=proxy_mgr)
-                    await self._browser.start()
-                    
-                    if proxy_mgr:
-                        ip = await proxy_mgr.verify_ip()
-                        self.add_log(f"Using IP: {ip}")
-                    
-                    # Check stop before booking
-                    if self._stop_requested:
-                        await self._browser.close()
-                        self._browser = None
+                    if remaining_time <= 60:  # Less than 1 minute left
+                        self.add_log("⏰ Schedule window ending - stopping sessions")
                         break
                     
-                    # Book appointment
-                    success = await self._browser.book_appointment(
-                        app_obj,
-                        config.DATE_RANGE_START,
-                        config.DATE_RANGE_END
-                    )
+                    # Use smaller of: session duration OR remaining time
+                    this_session_duration = min(session_duration_secs, remaining_time)
                     
-                    # Update status based on result
-                    data = load_data()  # Reload in case of changes
-                    for a in data["applicants"]:
-                        if a["id"] == applicant["id"]:
-                            a["status"] = "completed" if success else "failed"
-                            a["last_booked"] = datetime.now().isoformat() if success else None
+                    self.add_log(f"━━━ SESSION #{session_num} ━━━")
+                    self.add_log(f"Duration: {this_session_duration // 60} min")
+                    
+                    try:
+                        # Rotate IP for sessions after the first
+                        if session_num > 1 and proxy_mgr:
+                            self.add_log("🔄 Rotating IP for new session...")
+                            await proxy_mgr.rotate(reason="session_rotation")
+                        
+                        # Start fresh browser
+                        self._browser = BrowserEngine(proxy_manager=proxy_mgr)
+                        await self._browser.start()
+                        
+                        if proxy_mgr:
+                            ip = await proxy_mgr.verify_ip()
+                            self.add_log(f"IP: {ip}")
+                        
+                        # Check stop
+                        if self._stop_requested:
+                            await self._browser.close()
+                            self._browser = None
                             break
-                    save_data(data)
-                    
-                    if success:
-                        self.add_log(f"✓ Success: {applicant['passport_number']}", "success")
-                    else:
-                        self.add_log(f"✗ Failed: {applicant['passport_number']}", "error")
-                    
-                    # Cleanup browser
-                    await self._browser.close()
-                    self._browser = None
-                    
-                except Exception as e:
-                    logger.exception(f"Bot error for {applicant['passport_number']}: {e}")
-                    self.add_log(f"Error: {str(e)[:50]}", "error")
-                    
-                    # Mark as failed
-                    for a in data["applicants"]:
-                        if a["id"] == applicant["id"]:
-                            a["status"] = "failed"
+                        
+                        # Run detection for this session's duration
+                        success = await self._browser.book_appointment(
+                            app_obj,
+                            config.DATE_RANGE_START,
+                            config.DATE_RANGE_END,
+                            max_hunt_duration=this_session_duration
+                        )
+                        
+                        # Close browser after each session
+                        await self._browser.close()
+                        self._browser = None
+                        
+                        if success:
+                            # SLOT FOUND!
+                            slot_found = True
+                            self.add_log(f"🎉 SLOT DETECTED in session #{session_num}!", "success")
                             break
-                    save_data(data)
+                        else:
+                            self.add_log(f"Session #{session_num} complete - no slots")
+                        
+                        # Gap between sessions
+                        if not self._stop_requested:
+                            self.add_log(f"Waiting {config.SESSION_GAP_SECONDS}s before next session...")
+                            await asyncio.sleep(config.SESSION_GAP_SECONDS)
+                        
+                    except Exception as e:
+                        logger.exception(f"Session #{session_num} error: {e}")
+                        self.add_log(f"Session error: {str(e)[:40]}", "error")
+                        
+                        # Cleanup browser on error
+                        if self._browser:
+                            await self._browser.close()
+                            self._browser = None
+                        
+                        # Wait before retry
+                        await asyncio.sleep(config.SESSION_GAP_SECONDS)
+                
+                # ============================================
+                # END SESSION ROTATION LOOP
+                # ============================================
+                
+                # Update applicant status
+                data = load_data()
+                for a in data["applicants"]:
+                    if a["id"] == applicant["id"]:
+                        if slot_found:
+                            a["status"] = "slot_found"
+                            a["slot_detected_at"] = datetime.now().isoformat()
+                            a["sessions_run"] = session_num
+                        else:
+                            a["status"] = "no_slot"
+                            a["sessions_run"] = session_num
+                        break
+                save_data(data)
+                
+                if slot_found:
+                    self.add_log(f"✅ {applicant['passport_number']}: Slot found after {session_num} sessions", "success")
+                else:
+                    self.add_log(f"⏰ {applicant['passport_number']}: No slots in {session_num} sessions", "info")
                 
                 # Brief pause between applicants
                 if not self._stop_requested:
                     await asyncio.sleep(5)
             
-            self.add_log("Bot finished")
+            self.add_log("Bot finished all applicants")
             
         except Exception as e:
             logger.exception(f"Bot runner error: {e}")
@@ -279,7 +406,7 @@ class BotRunner:
         finally:
             self.running = False
             self.current_applicant = None
-            self._browser = None  # Clear reference on finish
+            self._browser = None
             
             # Log proxy stats
             if self._proxy_manager:
@@ -504,7 +631,7 @@ async def get_schedule():
 async def update_schedule(schedule: Schedule):
     """Update schedule"""
     data = load_data()
-    data["schedule"] = schedule.dict()
+    data["schedule"] = schedule.model_dump()
     save_data(data)
     return data["schedule"]
 

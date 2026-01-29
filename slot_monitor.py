@@ -635,67 +635,54 @@ class SlotHunter:
                         if self.proxy_manager:
                             await self.proxy_manager.report_success()
                             
-                        # SLOTS FOUND - Get elements and process
-                        logger.info(f"!" * 50)
-                        logger.info(f"AVAILABLE DATES DETECTED: {available_count} in {month}/{year}!")
-                        logger.info(f"!" * 50)
+                        # SLOTS FOUND - Detection mode: just log and return
+                        logger.info("!" * 50)
+                        logger.info(f"🎉 AVAILABLE DATES DETECTED: {available_count} in {month}/{year}!")
+                        logger.info("!" * 50)
                         
-                        # Get day numbers first to avoid stale element issues
+                        # Get day numbers for logging (without clicking)
                         available_dates = await self._scan_current_month()
-                        day_numbers = []
+                        found_dates = []
                         for date_el in available_dates:
-                            # Extract day numbers before any clicks (avoids stale refs)
                             try:
                                 day_text = date_el.text or ""
                                 day_num = int(''.join(filter(str.isdigit, day_text.strip())) or "0")
                                 if day_num > 0:
-                                    # Check if in range before adding
                                     if await self._is_date_in_range(date_el):
-                                        day_numbers.append(day_num)
+                                        found_dates.append(day_num)
                             except (ValueError, TypeError):
                                 continue
                         
-                        # Now iterate over day numbers (not elements - avoids stale refs)
-                        for day_num in day_numbers:
-                            # Click the date (re-queries DOM internally)
-                            if not await self._click_date(day_num):
-                                logger.error(f"Failed to click date {day_num} - trying next")
-                                continue
-                            
-                            # Select time slot
-                            time_slot = await self._select_time_slot()
-                            if not time_slot:
-                                logger.warning("No time slots for this date - trying next date")
-                                # Go back and try next available date
-                                continue
-                            
-                            # SUCCESS! Build result
-                            try:
-                                slot_date = date(year, month, day_num)
-                            except:
-                                slot_date = date.today()
-                            
-                            result = CapturedSlot(
-                                date=slot_date,
-                                time=time_slot,
-                                center=self.target_center,
-                                captured_at=datetime.now()
-                            )
-                            
-                            self.status = SlotStatus.FOUND
-                            logger.info("=" * 50)
-                            logger.info(f"SLOT CAPTURED: {result.date} at {result.time}")
-                            logger.info(f"Center: {result.center}")
-                            logger.info(f"Captured at: {result.captured_at}")
-                            logger.info(f"Total polls: {self.poll_count}")
-                            logger.info(f"Time elapsed: {elapsed:.0f}s")
-                            logger.info("=" * 50)
-                            
-                            if self.on_slot_found:
-                                await self.on_slot_found(result)
-                            
-                            return result
-                            
+                        # Build result with first available date (no time slot - detection only)
+                        try:
+                            first_day = found_dates[0] if found_dates else 1
+                            slot_date = date(year, month, first_day)
+                        except:
+                            slot_date = date.today()
+                        
+                        result = CapturedSlot(
+                            date=slot_date,
+                            time="DETECTED (not clicked)",  # Detection mode - no time slot selected
+                            center=self.target_center,
+                            captured_at=datetime.now()
+                        )
+                        
+                        self.status = SlotStatus.FOUND
+                        logger.info("=" * 50)
+                        logger.info(f"🎯 SLOT DETECTED: {result.date}")
+                        logger.info(f"   Available dates in {month}/{year}: {found_dates}")
+                        logger.info(f"   Center: {result.center}")
+                        logger.info(f"   Detected at: {result.captured_at}")
+                        logger.info(f"   Total polls: {self.poll_count}")
+                        logger.info(f"   Time elapsed: {elapsed:.0f}s")
+                        logger.info("=" * 50)
+                        logger.info("✓ Detection complete - NOT clicking/booking (detection mode)")
+                        
+                        if self.on_slot_found:
+                            await self.on_slot_found(result)
+                        
+                        return result
+                        
                     else:
                         # No slots in this month
                         pass
