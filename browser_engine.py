@@ -28,7 +28,7 @@ class BrowserEngine:
         self._proxy_ext_dir: Optional[str] = None  # Track extension directory for cleanup
     
     def _create_proxy_auth_extension(self) -> Optional[str]:
-
+        """Create Chrome extension for proxy authentication"""
         if not self._current_proxy:
             return None
         
@@ -86,17 +86,45 @@ console.log('Proxy auth extension loaded');
             return None
     
     async def start(self):
-        """Initialize browser with proxy if configured"""
+        """Initialize browser with Docker/production-ready settings"""
         logger.info("Starting browser...")
         
+        # CRITICAL: Docker-compatible Chrome arguments
         browser_args = [
-            "--disable-blink-features=AutomationControlled",
-            "--disable-dev-shm-usage",
+            # ESSENTIAL for Docker
             "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            
+            # Performance & stability
             "--disable-gpu",
+            "--disable-software-rasterizer",
+            "--disable-extensions",
+            "--disable-background-networking",
+            "--disable-default-apps",
+            "--disable-sync",
+            "--disable-translate",
+            
+            # Anti-detection
+            "--disable-blink-features=AutomationControlled",
+            
+            # Display
             "--window-size=1920,1080",
-            "--disable-web-security",  # Helps with some proxy issues
-            "--ignore-certificate-errors",  # For proxy SSL
+            "--start-maximized",
+            
+            # Network
+            "--disable-web-security",
+            "--ignore-certificate-errors",
+            "--disable-features=IsolateOrigins,site-per-process",
+            
+            # Memory optimization for Docker
+            "--disable-dev-shm-usage",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--no-zygote",
+            
+            # DNS & proxy friendly
+            "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE localhost",
         ]
         
         # Configure proxy if enabled
@@ -116,46 +144,90 @@ console.log('Proxy auth extension loaded');
             logger.info(f"Proxy configured: {self._current_proxy.host}:{self._current_proxy.port}")
             logger.info(f"Session ID: {self._current_proxy.session_id}")
         
-        # Start browser
-        self.browser = await uc.start(
-            headless=config.HEADLESS,
-            browser_args=browser_args
-        )
-        
         try:
-            self.page = await self.browser.get(config.BASE_URL)
-            await asyncio.sleep(2)
+            # Start browser with retries
+            max_start_retries = 3
+            for attempt in range(max_start_retries):
+                try:
+                    self.browser = await uc.start(
+                        headless=config.HEADLESS,
+                        browser_args=browser_args
+                    )
+                    logger.info(f"Browser process started (attempt {attempt + 1})")
+                    break
+                except Exception as e:
+                    logger.warning(f"Browser start attempt {attempt + 1} failed: {e}")
+                    if attempt < max_start_retries - 1:
+                        await asyncio.sleep(2)
+                    else:
+                        raise
+            
+            # Navigate to page with retries
+            logger.info(f"Navigating to {config.BASE_URL}...")
+            max_nav_retries = 3
+            
+            for attempt in range(max_nav_retries):
+                try:
+                    self.page = await self.browser.get(config.BASE_URL, new_tab=False)
+                    
+                    # Wait for page to load
+                    await asyncio.sleep(3)
+                    
+                    # Verify page loaded
+                    try:
+                        title = await self.page.evaluate("document.title")
+                        url = self.page.url
+                        
+                        logger.info(f"Page loaded - URL: {url}")
+                        logger.info(f"Page title: {title}")
+                        
+                        # Check for connection errors
+                        if not title or "ERR_" in str(title).upper() or len(str(title)) == 0:
+                            raise ConnectionError(f"Page load failed - invalid title: {title}")
+                        
+                        # Check if we got a real page
+                        if "qatarvisacenter" not in str(url).lower() and attempt < max_nav_retries - 1:
+                            logger.warning(f"Unexpected URL: {url}, retrying...")
+                            await asyncio.sleep(3)
+                            continue
+                        
+                        break  # Success
+                        
+                    except Exception as e:
+                        logger.warning(f"Page verification failed (attempt {attempt + 1}): {e}")
+                        if attempt < max_nav_retries - 1:
+                            await asyncio.sleep(3)
+                        else:
+                            raise
+                    
+                except Exception as e:
+                    logger.warning(f"Navigation attempt {attempt + 1} failed: {e}")
+                    if attempt < max_nav_retries - 1:
+                        await asyncio.sleep(3)
+                    else:
+                        raise ConnectionError(f"Failed to load {config.BASE_URL} after {max_nav_retries} attempts")
             
             # Verify proxy is working (if configured)
             if self.proxy_manager:
-                ip = await self.proxy_manager.verify_ip()
-                if ip:
-                    logger.info(f"Browser started with proxy IP: {ip}")
-                else:
-                    logger.warning("Could not verify proxy IP - continuing anyway")
+                try:
+                    ip = await self.proxy_manager.verify_ip()
+                    if ip:
+                        logger.info(f"✓ Proxy IP verified: {ip}")
+                    else:
+                        logger.warning("Could not verify proxy IP - continuing anyway")
+                except Exception as e:
+                    logger.warning(f"Proxy verification failed: {e}")
             
             # Attach bandwidth monitor
-            await bandwidth_monitor.attach_to_page(self.page)
+            try:
+                await bandwidth_monitor.attach_to_page(self.page)
+            except Exception as e:
+                logger.warning(f"Bandwidth monitor attachment failed: {e}")
             
-            # Verify page loaded
-            title = await self.page.evaluate("document.title")
-            url = self.page.url
-            logger.info(f"Navigated to: {url} | Title: {title}")
-            
-            # Check for navigation errors
-            if "ERR_" in str(title) or "available" in str(title).lower() or not title:
-                error_msg = f"Navigation failed - Page title: {title}"
-                logger.error(error_msg)
-                
-                if self.proxy_manager:
-                    await self.proxy_manager.report_failure("connection")
-                
-                raise ConnectionError(f"Failed to load {config.BASE_URL}")
-            
-            logger.info("Browser started successfully")
+            logger.info("✓ Browser started successfully")
             
         except Exception as e:
-            logger.error(f"Failed to start browser session: {e}")
+            logger.error(f"Browser start failed: {e}")
             
             if self.proxy_manager:
                 await self.proxy_manager.report_failure("connection")
@@ -195,7 +267,7 @@ console.log('Proxy auth extension loaded');
         
         # Close existing browser
         await self.close()
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
         
         # Rotate proxy
         await self.proxy_manager.rotate(reason="manual_restart")
@@ -203,7 +275,7 @@ console.log('Proxy auth extension loaded');
         # Start fresh browser
         try:
             await self.start()
-            logger.info("Browser restarted with new IP successfully")
+            logger.info("✓ Browser restarted with new IP successfully")
             return True
         except Exception as e:
             logger.error(f"Failed to restart browser: {e}")
@@ -228,7 +300,7 @@ console.log('Proxy auth extension loaded');
                 return True
         
         # Connection errors - immediate rotation
-        if any(x in error_str for x in ['connection refused', 'timeout', 'unreachable', 'reset by peer']):
+        if any(x in error_str for x in ['connection refused', 'timeout', 'unreachable', 'reset by peer', 'failed to load']):
             logger.warning("Connection error detected - rotating IP")
             rotated = await self.proxy_manager.report_failure("connection")
             if rotated:
@@ -950,7 +1022,7 @@ console.log('Proxy auth extension loaded');
         max_hunt_duration: int = 3600,
         center: str = "Islamabad"
     ) -> bool:
-
+        """Main booking flow with retry logic"""
         max_full_retries = 3  
         
         for retry in range(max_full_retries):
@@ -1042,5 +1114,8 @@ console.log('Proxy auth extension loaded');
     async def screenshot(self, filename: str = "debug.png"):
         """Take screenshot for debugging"""
         if self.page:
-            await self.page.save_screenshot(filename)
-            logger.info(f"Screenshot saved: {filename}")
+            try:
+                await self.page.save_screenshot(filename)
+                logger.info(f"Screenshot saved: {filename}")
+            except Exception as e:
+                logger.warning(f"Screenshot failed: {e}")
