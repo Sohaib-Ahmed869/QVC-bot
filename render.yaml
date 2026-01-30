@@ -1,0 +1,17 @@
+# render.yaml
+services:
+  - type: web
+    name: qatar-visa-bot
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: CAPSOLVER_API_KEY
+        sync: false
+      - key: PROXY_USERNAME
+        sync: false
+      - key: PROXY_PASSWORD
+        sync: false
+    healthCheckPath: /
