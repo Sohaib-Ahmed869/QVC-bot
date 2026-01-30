@@ -1,6 +1,7 @@
 """
 Qatar Visa Bot - Web Server
 FastAPI-based REST API for the web control panel
+Production-ready version for Render deployment
 """
 
 import asyncio
@@ -9,6 +10,7 @@ import uuid
 import logging
 import tempfile
 import shutil
+import os
 from datetime import datetime, time
 from pathlib import Path
 from typing import List, Optional
@@ -17,6 +19,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 import uvicorn
 from config import config
@@ -27,20 +30,28 @@ log_format = logging.Formatter('%(asctime)s | %(levelname)-8s | %(name)s | %(mes
 # Console handler
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(log_format)
 
 # File handler - same as main.py uses
-file_handler = logging.FileHandler('visa_bot.log', mode='a', encoding='utf-8')
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(log_format)
+try:
+    file_handler = logging.FileHandler('visa_bot.log', mode='a', encoding='utf-8')
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(log_format)
+except Exception as e:
+    print(f"Warning: Could not create log file: {e}")
+    file_handler = None
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(console_handler)
-logger.addHandler(file_handler)
+if file_handler:
+    logger.addHandler(file_handler)
+    logging.getLogger().addHandler(file_handler)
 
-# Also add file handler to root logger for other modules
-logging.getLogger().addHandler(file_handler)
 
+# ============================================
+# Pydantic Models
+# ============================================
 
 class ApplicantCreate(BaseModel):
     passport_number: str = Field(..., min_length=5, max_length=15)
@@ -73,10 +84,14 @@ class Schedule(BaseModel):
     start_time: Optional[str] = None
     end_time: Optional[str] = None
 
+class BotRunRequest(BaseModel):
+    center: str = "Islamabad"
+
 class BotStatus(BaseModel):
     running: bool = False
     current_applicant: Optional[str] = None
     logs: List[dict] = []
+
 
 # ============================================
 # Data Storage
@@ -87,24 +102,45 @@ DATA_FILE = Path(__file__).parent / "applicants.json"
 def load_data() -> dict:
     """Load data from JSON file"""
     if DATA_FILE.exists():
-        with open(DATA_FILE, 'r') as f:
-            return json.load(f)
-    return {"applicants": [], "schedule": {"enabled": True, "start_time": "22:00", "end_time": "00:00"}}
+        try:
+            with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to load data: {e}")
+    return {
+        "applicants": [],
+        "schedule": {
+            "enabled": True,
+            "days": []
+        }
+    }
 
 def save_data(data: dict):
     """Save data to JSON file atomically"""
     try:
         # Write to temp file first, then atomic move
-        with tempfile.NamedTemporaryFile('w', dir=DATA_FILE.parent, delete=False, suffix='.tmp', encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(
+            'w',
+            dir=DATA_FILE.parent,
+            delete=False,
+            suffix='.tmp',
+            encoding='utf-8'
+        ) as f:
             json.dump(data, f, indent=2)
             temp_path = Path(f.name)
-        # Atomic move (on Windows this may not be truly atomic but is still safer)
-        shutil.move(str(temp_path), str(DATA_FILE))
+        
+        # Atomic move (replace existing file)
+        temp_path.replace(DATA_FILE)
+        
     except Exception as e:
         logger.error(f"Failed to save data: {e}")
         # Fallback to direct write if temp file fails
-        with open(DATA_FILE, 'w', encoding='utf-8') as f:
-            json.dump(data, f, indent=2)
+        try:
+            with open(DATA_FILE, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2)
+        except Exception as e2:
+            logger.error(f"Fallback save also failed: {e2}")
+
 
 # ============================================
 # Bot Runner
@@ -143,6 +179,7 @@ class BotRunner:
         return self._proxy_manager
 
     def add_log(self, message: str, log_type: str = ""):
+        """Add log entry with timestamp"""
         self.logs.append({
             "time": datetime.now().strftime("%H:%M:%S"),
             "message": message,
@@ -365,7 +402,10 @@ class BotRunner:
                         
                         # Cleanup browser on error
                         if self._browser:
-                            await self._browser.close()
+                            try:
+                                await self._browser.close()
+                            except:
+                                pass
                             self._browser = None
                         
                         # Wait before retry
@@ -437,8 +477,10 @@ class BotRunner:
         self.current_applicant = None
         self.add_log("Bot force stopped", "error")
 
+
 # Global bot runner instance
 bot_runner = BotRunner()
+
 
 # ============================================
 # Scheduler
@@ -506,6 +548,7 @@ async def check_schedule():
         # Check every minute
         await asyncio.sleep(60)
 
+
 # ============================================
 # FastAPI App
 # ============================================
@@ -516,6 +559,7 @@ async def lifespan(app: FastAPI):
     # Start scheduler on startup
     asyncio.create_task(check_schedule())
     logger.info("Scheduler started")
+    logger.info("Qatar Visa Bot Web Server is ready")
     yield
     # Graceful shutdown - cleanup browser processes
     logger.info("Shutting down - cleaning up...")
@@ -529,10 +573,28 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Serve static files
+# CORS middleware for development/production
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Determine web directory location
 web_dir = Path(__file__).parent / "web"
+if not web_dir.exists():
+    # Try alternative location
+    web_dir = Path(__file__).parent / "static"
+
+# Serve static files if directory exists
 if web_dir.exists():
     app.mount("/static", StaticFiles(directory=str(web_dir)), name="static")
+    logger.info(f"Serving static files from: {web_dir}")
+else:
+    logger.warning(f"Static files directory not found: {web_dir}")
+
 
 # ============================================
 # API Routes
@@ -544,17 +606,39 @@ async def root():
     index_path = web_dir / "index.html"
     if index_path.exists():
         return FileResponse(str(index_path))
-    return {"message": "Qatar Visa Bot API"}
+    # Fallback API response
+    return {
+        "message": "Qatar Visa Bot API",
+        "version": "1.0.0",
+        "status": "running"
+    }
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Render"""
+    return {
+        "status": "healthy",
+        "bot_running": bot_runner.running,
+        "timestamp": datetime.now().isoformat()
+    }
+
+# Serve CSS and JS directly (fallback for simple setups)
 @app.get("/styles.css")
 async def styles():
     """Serve CSS"""
-    return FileResponse(str(web_dir / "styles.css"), media_type="text/css")
+    css_path = web_dir / "styles.css"
+    if css_path.exists():
+        return FileResponse(str(css_path), media_type="text/css")
+    raise HTTPException(status_code=404, detail="CSS file not found")
 
 @app.get("/app.js")
 async def script():
     """Serve JS"""
-    return FileResponse(str(web_dir / "app.js"), media_type="application/javascript")
+    js_path = web_dir / "app.js"
+    if js_path.exists():
+        return FileResponse(str(js_path), media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="JS file not found")
+
 
 # --- Applicants ---
 
@@ -564,7 +648,7 @@ async def list_applicants():
     data = load_data()
     return {"applicants": data.get("applicants", [])}
 
-@app.post("/api/applicants")
+@app.post("/api/applicants", response_model=Applicant)
 async def create_applicant(applicant: ApplicantCreate):
     """Create a new applicant"""
     data = load_data()
@@ -584,9 +668,10 @@ async def create_applicant(applicant: ApplicantCreate):
     data["applicants"].append(new_applicant)
     save_data(data)
     
+    logger.info(f"Created applicant: {new_applicant['passport_number']}")
     return new_applicant
 
-@app.put("/api/applicants/{applicant_id}")
+@app.put("/api/applicants/{applicant_id}", response_model=Applicant)
 async def update_applicant(applicant_id: str, applicant: ApplicantUpdate):
     """Update an applicant"""
     data = load_data()
@@ -601,6 +686,7 @@ async def update_applicant(applicant_id: str, applicant: ApplicantUpdate):
                 "status": "pending"  # Reset status when updated
             })
             save_data(data)
+            logger.info(f"Updated applicant: {applicant_id}")
             return data["applicants"][i]
     
     raise HTTPException(status_code=404, detail="Applicant not found")
@@ -617,23 +703,46 @@ async def delete_applicant(applicant_id: str):
         raise HTTPException(status_code=404, detail="Applicant not found")
     
     save_data(data)
+    logger.info(f"Deleted applicant: {applicant_id}")
     return {"message": "Applicant deleted"}
+
+@app.post("/api/applicants/{applicant_id}/reset", response_model=Applicant)
+async def reset_applicant(applicant_id: str):
+    """Reset an applicant's status to pending"""
+    data = load_data()
+    
+    for a in data["applicants"]:
+        if a["id"] == applicant_id:
+            a["status"] = "pending"
+            a["last_booked"] = None
+            save_data(data)
+            logger.info(f"Reset applicant: {applicant_id}")
+            return a
+    
+    raise HTTPException(status_code=404, detail="Applicant not found")
+
 
 # --- Schedule ---
 
-@app.get("/api/schedule")
+@app.get("/api/schedule", response_model=Schedule)
 async def get_schedule():
     """Get current schedule"""
     data = load_data()
-    return data.get("schedule", {"enabled": True, "start_time": "22:00", "end_time": "00:00"})
+    schedule = data.get("schedule", {
+        "enabled": True,
+        "days": []
+    })
+    return schedule
 
-@app.post("/api/schedule")
+@app.post("/api/schedule", response_model=Schedule)
 async def update_schedule(schedule: Schedule):
     """Update schedule"""
     data = load_data()
     data["schedule"] = schedule.model_dump()
     save_data(data)
+    logger.info("Schedule updated")
     return data["schedule"]
+
 
 # --- Bot Control ---
 
@@ -646,16 +755,28 @@ async def get_status(log_cursor: int = 0):
     if bot_runner._proxy_manager:
         proxy_stats = bot_runner._proxy_manager.get_stats()
     
+    # Get current applicant statuses for live updates
+    data = load_data()
+    applicant_updates = []
+    if bot_runner.running:
+        for a in data["applicants"]:
+            if a.get("status") in ["processing", "completed", "failed"]:
+                applicant_updates.append({
+                    "id": a["id"],
+                    "status": a["status"]
+                })
+    
     return {
         "running": bot_runner.running,
         "current_applicant": bot_runner.current_applicant,
         "logs": logs,
         "log_cursor": new_cursor,
+        "applicants": applicant_updates,
         "proxy": proxy_stats
     }
 
 @app.post("/api/run")
-async def run_bot(background_tasks: BackgroundTasks, center: str = "Islamabad"):
+async def run_bot(background_tasks: BackgroundTasks, request: BotRunRequest):
     """Start the bot"""
     if bot_runner.running:
         raise HTTPException(status_code=400, detail="Bot is already running")
@@ -667,40 +788,39 @@ async def run_bot(background_tasks: BackgroundTasks, center: str = "Islamabad"):
         raise HTTPException(status_code=400, detail="No pending applicants")
     
     # Run in background
-    background_tasks.add_task(bot_runner.run, center)
+    background_tasks.add_task(bot_runner.run, request.center)
     
-    return {"message": "Bot started", "center": center}
+    logger.info(f"Bot started for center: {request.center}")
+    return {"message": "Bot started", "center": request.center}
 
 @app.post("/api/stop")
 async def stop_bot():
     """Force stop the bot - immediately kill browser"""
     await bot_runner.force_stop()
+    logger.info("Bot stopped by user")
     return {"message": "Bot force stopped"}
 
-# Reset applicant status
-@app.post("/api/applicants/{applicant_id}/reset")
-async def reset_applicant(applicant_id: str):
-    """Reset an applicant's status to pending"""
-    data = load_data()
-    
-    for a in data["applicants"]:
-        if a["id"] == applicant_id:
-            a["status"] = "pending"
-            a["last_booked"] = None
-            save_data(data)
-            return a
-    
-    raise HTTPException(status_code=404, detail="Applicant not found")
 
 # ============================================
 # Entry Point
 # ============================================
 
 if __name__ == "__main__":
-    print("\n" + "=" * 50)
+    # Get port from environment variable (for Render)
+    port = int(os.getenv("PORT", 8000))
+    host = os.getenv("HOST", "0.0.0.0")
+    
+    print("\n" + "=" * 60)
     print("Qatar Visa Bot - Web Control Panel")
-    print("=" * 50)
-    print(f"\nOpen in browser: http://localhost:8000")
+    print("=" * 60)
+    print(f"\nServer starting on {host}:{port}")
+    print(f"Open in browser: http://localhost:{port}")
     print("Press Ctrl+C to stop\n")
     
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(
+        "web_server:app",
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=True
+    )
