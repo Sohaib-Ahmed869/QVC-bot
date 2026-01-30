@@ -21,3 +21,4 @@ pydantic[email]>=2.5.0
 # Environment variables
 python-dotenv>=1.0.0
 
+httpx
