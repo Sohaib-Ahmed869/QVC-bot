@@ -1,12 +1,18 @@
 # Dockerfile
 FROM python:3.10-slim
 
-# Install Chrome dependencies
-RUN apt-get update && apt-get install -y \
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    DEBIAN_FRONTEND=noninteractive \
+    DISPLAY=:99 \
+    CHROME_BIN=/usr/bin/google-chrome \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Install system dependencies and Chrome in one layer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Chrome dependencies
     wget \
     gnupg \
-    unzip \
-    curl \
     ca-certificates \
     fonts-liberation \
     libasound2 \
@@ -29,34 +35,44 @@ RUN apt-get update && apt-get install -y \
     xdg-utils \
     libu2f-udev \
     libvulkan1 \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Chrome
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    # Install Chrome
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
     && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+# Copy requirements first (for better caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p logs screenshots data
+RUN mkdir -p logs screenshots data web
 
-# Expose port for web server
+# Create non-root user for security
+RUN useradd -m -u 1000 botuser && \
+    chown -R botuser:botuser /app
+
+# Switch to non-root user
+USER botuser
+
+# Expose port
 EXPOSE 8000
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV DISPLAY=:99
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
 
 # Run the web server
 CMD ["python", "web_server.py"]
