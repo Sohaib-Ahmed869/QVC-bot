@@ -1,4 +1,4 @@
-# Dockerfile
+# Dockerfile - Fixed for Debian 13+ (apt-key deprecated)
 FROM python:3.10-slim
 
 # Set environment variables
@@ -10,10 +10,11 @@ ENV PYTHONUNBUFFERED=1 \
 
 # Install system dependencies and Chrome in one layer
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Chrome dependencies
+    # Essential tools
     wget \
     gnupg \
     ca-certificates \
+    # Chrome dependencies
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -35,14 +36,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     libu2f-udev \
     libvulkan1 \
-    # Install Chrome
-    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable \
+    # Install Chrome (NEW METHOD - no apt-key)
+    && wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y /tmp/google-chrome.deb \
     # Cleanup
+    && rm /tmp/google-chrome.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Verify Chrome installation
+RUN google-chrome --version
 
 # Set working directory
 WORKDIR /app
@@ -72,7 +75,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=5)" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)" || exit 1
 
 # Run the web server
 CMD ["python", "web_server.py"]
