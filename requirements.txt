@@ -1,24 +1,63 @@
 # Qatar Visa Appointment Bot - Dependencies
+# Production-ready requirements for Docker/Render
 
-# Browser automation (undetected)
+# ============================================
+# Core Web Framework
+# ============================================
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+
+# ============================================
+# Data Validation
+# ============================================
+pydantic>=2.5.0
+pydantic[email]>=2.5.0
+pydantic-settings>=2.1.0
+
+# ============================================
+# Browser Automation (Undetected)
+# ============================================
 nodriver>=0.38
 
-# CAPTCHA solving
+# ============================================
+# CAPTCHA Solving
+# ============================================
 ddddocr>=1.4.11
-httpx>=0.27.0
+Pillow>=10.2.0
 
-# Excel handling
+# ============================================
+# HTTP Client
+# ============================================
+httpx>=0.27.0
+requests>=2.31.0
+
+# ============================================
+# Excel Handling
+# ============================================
 openpyxl>=3.1.2
 
-# Async file operations
+# ============================================
+# File Operations
+# ============================================
 aiofiles>=23.2.1
 
-# Web server (for control panel)
-fastapi>=0.109.0
-uvicorn>=0.27.0
-pydantic[email]>=2.5.0
-
-# Environment variables
+# ============================================
+# Environment Variables
+# ============================================
 python-dotenv>=1.0.0
 
-httpx
+# ============================================
+# CORS Support
+# ============================================
+# Already included in fastapi, but explicit for clarity
+
+# ============================================
+# Optional: Better logging (if needed)
+# ============================================
+# python-json-logger>=2.0.7
+
+# ============================================
+# Production Server (alternative to uvicorn)
+# ============================================
+# gunicorn>=21.2.0  # Only if you want gunicorn instead
