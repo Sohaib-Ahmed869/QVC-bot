@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Debug HTML snapshots
+debug_html/
+
 # C extensions
 *.so
 

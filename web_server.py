@@ -354,7 +354,7 @@ class BotRunner:
                     try:
                         # Rotate IP for sessions after the first
                         if session_num > 1 and proxy_mgr:
-                            self.add_log("🔄 Rotating IP for new session...")
+                            self.add_log("aaaRotating IP for new session...")
                             await proxy_mgr.rotate(reason="session_rotation")
                         
                         # Start fresh browser

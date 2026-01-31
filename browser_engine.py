@@ -4,7 +4,7 @@ import json
 import os
 import shutil
 import tempfile
-from datetime import date
+from datetime import date, datetime
 from typing import Optional, Tuple
 import logging
 
@@ -17,6 +17,10 @@ from proxy_manager import ProxyManager, ProxyConfig
 
 logger = logging.getLogger(__name__)
 
+# Create debug directory for HTML snapshots
+DEBUG_HTML_DIR = os.path.join(os.path.dirname(__file__), "debug_html")
+os.makedirs(DEBUG_HTML_DIR, exist_ok=True)
+
 
 class BrowserEngine:
     def __init__(self, proxy_manager: ProxyManager = None):
@@ -26,6 +30,48 @@ class BrowserEngine:
         self.proxy_manager = proxy_manager
         self._current_proxy: Optional[ProxyConfig] = None
         self._proxy_ext_dir: Optional[str] = None  # Track extension directory for cleanup
+        self._session_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # For logging
+    
+    async def _log_html_snapshot(self, event_name: str, selector: str = None):
+        """
+        Capture and log HTML snapshot for debugging.
+        Saves to debug_html/ directory with timestamp.
+        """
+        if not self.page:
+            return
+        
+        try:
+            timestamp = datetime.now().strftime("%H%M%S")
+            filename = f"{self._session_id}_{timestamp}_{event_name}.html"
+            filepath = os.path.join(DEBUG_HTML_DIR, filename)
+            
+            # Get full page HTML or specific element
+            if selector:
+                html = await self.page.evaluate(f'''
+                    (() => {{
+                        const el = document.querySelector("{selector}");
+                        return el ? el.outerHTML : "ELEMENT NOT FOUND: {selector}";
+                    }})()
+                ''')
+            else:
+                html = await self.page.evaluate("document.documentElement.outerHTML")
+            
+            # Save to file
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(f"<!-- Event: {event_name} -->\n")
+                f.write(f"<!-- URL: {self.page.url} -->\n")
+                f.write(f"<!-- Time: {datetime.now().isoformat()} -->\n")
+                if selector:
+                    f.write(f"<!-- Selector: {selector} -->\n")
+                f.write(html)
+            
+            # Log summary to console
+            html_preview = html[:200].replace('\n', ' ').replace('\r', '')
+            logger.info(f"[HTML] {event_name}: {filepath}")
+            logger.debug(f"[HTML Preview] {html_preview}...")
+            
+        except Exception as e:
+            logger.warning(f"Failed to capture HTML snapshot: {e}")
     
     def _create_proxy_auth_extension(self) -> Optional[str]:
         """Create Chrome extension for proxy authentication"""
@@ -219,12 +265,24 @@ console.log('Proxy auth extension loaded');
                     logger.warning(f"Proxy verification failed: {e}")
             
             # Attach bandwidth monitor
-            try:
-                await bandwidth_monitor.attach_to_page(self.page)
-            except Exception as e:
-                logger.warning(f"Bandwidth monitor attachment failed: {e}")
+            await bandwidth_monitor.attach_to_page(self.page)
             
-            logger.info("✓ Browser started successfully")
+            # Verify page loaded
+            title = await self.page.evaluate("document.title")
+            url = self.page.url
+            logger.info(f"Navigated to: {url} | Title: {title}")
+            
+            # Check for navigation errors
+            if "ERR_" in str(title) or "available" in str(title).lower() or not title:
+                error_msg = f"Navigation failed - Page title: {title}"
+                logger.error(error_msg)
+                
+                if self.proxy_manager:
+                    await self.proxy_manager.report_failure("connection")
+                
+                raise ConnectionError(f"Failed to load {config.BASE_URL}")
+            
+            logger.info("Browser started successfully")
             
         except Exception as e:
             logger.error(f"Browser start failed: {e}")

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from datetime import date, datetime, timedelta
 from typing import Optional, Tuple, List, Callable
 from dataclasses import dataclass
@@ -8,6 +9,10 @@ from enum import Enum
 import nodriver as uc
 
 logger = logging.getLogger(__name__)
+
+# Create debug directory for HTML snapshots
+DEBUG_HTML_DIR = os.path.join(os.path.dirname(__file__), "debug_html")
+os.makedirs(DEBUG_HTML_DIR, exist_ok=True)
 
 
 class SlotStatus(Enum):
@@ -82,6 +87,7 @@ class SlotHunter:
         date_range: Tuple[date, date] = None,
         on_slot_found: Callable = None,
         proxy_manager = None,  # For IP rotation reporting only
+        browser_engine = None,  # For HTML logging
     ):
 
         self.page = page
@@ -91,6 +97,7 @@ class SlotHunter:
         self.date_range = date_range
         self.on_slot_found = on_slot_found
         self.proxy_manager = proxy_manager
+        self.browser_engine = browser_engine  # Reference for HTML logging
         
         # State
         self.status = SlotStatus.SEARCHING
@@ -99,6 +106,48 @@ class SlotHunter:
         self.max_months = 5  # Jan → May based on your observation
         self._stop_flag = False
         self._consecutive_empty_polls = 0  # Track empty results for rotation trigger
+        self._session_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # For logging
+    
+    async def _log_html_snapshot(self, event_name: str, selector: str = None):
+        """
+        Capture and log HTML snapshot for debugging.
+        Saves to debug_html/ directory with timestamp.
+        """
+        if not self.page:
+            return
+        
+        try:
+            timestamp = datetime.now().strftime("%H%M%S")
+            filename = f"{self._session_id}_{timestamp}_{event_name}.html"
+            filepath = os.path.join(DEBUG_HTML_DIR, filename)
+            
+            # Get full page HTML or specific element
+            if selector:
+                html = await self.page.evaluate(f'''
+                    (() => {{
+                        const el = document.querySelector("{selector}");
+                        return el ? el.outerHTML : "ELEMENT NOT FOUND: {selector}";
+                    }})()
+                ''')
+            else:
+                html = await self.page.evaluate("document.documentElement.outerHTML")
+            
+            # Save to file
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(f"<!-- Event: {event_name} -->\n")
+                f.write(f"<!-- URL: {self.page.url} -->\n")
+                f.write(f"<!-- Time: {datetime.now().isoformat()} -->\n")
+                f.write(f"<!-- Poll: {self.poll_count} -->\n")
+                if selector:
+                    f.write(f"<!-- Selector: {selector} -->\n")
+                f.write(html)
+            
+            # Log summary to console
+            logger.info(f"[HTML] {event_name}: {filepath}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to capture HTML snapshot: {e}")
+        
         
     async def _select_center(self) -> bool:
         """Select the target QVC center from dropdown"""
@@ -615,6 +664,10 @@ class SlotHunter:
             # Log every 10th poll or first 5
             if self.poll_count <= 5 or self.poll_count % 10 == 0:
                 logger.info(f"[Poll #{self.poll_count}] Scanning all months... ({remaining:.0f}s / {remaining/60:.1f}min remaining)")
+                # Capture HTML on first poll and every 10th poll for debugging
+                if self.poll_count == 1 or self.poll_count % 10 == 0:
+                    await self._log_html_snapshot(f"poll_{self.poll_count}_calendar", self.SELECTORS["calendar"])
+
             
             try:
                 # Reset to first month
@@ -639,6 +692,10 @@ class SlotHunter:
                         logger.info("!" * 50)
                         logger.info(f"🎉 AVAILABLE DATES DETECTED: {available_count} in {month}/{year}!")
                         logger.info("!" * 50)
+                        
+                        # Capture HTML snapshot of available slots
+                        await self._log_html_snapshot(f"slots_found_{month}_{year}")
+
                         
                         # Get day numbers for logging (without clicking)
                         available_dates = await self._scan_current_month()
@@ -714,11 +771,15 @@ class SlotHunter:
             except Exception as e:
                 logger.error(f"Error during poll #{self.poll_count}: {e}")
                 
+                # Capture HTML on error for debugging
+                await self._log_html_snapshot(f"poll_{self.poll_count}_error")
+                
                 # Propagate specific blocking errors to browser_engine
                 if "blocked" in str(e).lower():
                     raise e
                         
                 await asyncio.sleep(self.poll_interval)
+
         
         self.status = SlotStatus.ERROR
         return None

@@ -4,7 +4,6 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 import logging
-
 from config import config, Applicant
 from data_handler import DataHandler, create_template
 from browser_engine import BrowserEngine
