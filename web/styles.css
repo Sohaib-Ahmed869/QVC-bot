@@ -1,5 +1,6 @@
 /* ============================================
    Qatar Visa Bot - Clean & Simple UI
+   Version 2.0 - Parallel Sessions Support
    ============================================ */
 
 :root {
@@ -154,6 +155,11 @@ body {
     background: var(--warning);
 }
 
+.status-indicator.slot-found .status-dot {
+    background: var(--warning);
+    animation: pulse 0.5s ease-in-out infinite;
+}
+
 /* ============================================
    Main Grid Layout
    ============================================ */
@@ -189,9 +195,21 @@ body {
     margin-bottom: var(--space-lg);
 }
 
+.panel-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
 .panel-header h2 {
     font-size: 1.125rem;
     font-weight: 600;
+}
+
+.selection-info {
+    font-size: 0.875rem;
+    color: var(--accent);
+    font-weight: 500;
 }
 
 /* ============================================
@@ -202,7 +220,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    min-height: 400px;
+    min-height: 300px;
+    max-height: 500px;
+    overflow-y: auto;
 }
 
 .empty-state {
@@ -237,10 +257,11 @@ body {
     display: flex;
     align-items: center;
     padding: var(--space-md);
-    border: 1px solid var(--border);
+    border: 2px solid var(--border);
     border-radius: var(--radius-md);
     transition: all var(--transition-fast);
     animation: slideInUp 0.3s ease;
+    cursor: pointer;
 }
 
 .applicant-card:hover {
@@ -248,12 +269,24 @@ body {
     box-shadow: var(--shadow-sm);
 }
 
-.applicant-card.processing {
+/* Selected state */
+.applicant-card.selected {
     border-color: var(--accent);
     background: var(--accent-light);
 }
 
-.applicant-card.completed {
+.applicant-card.selected .applicant-number {
+    background: var(--accent);
+    color: white;
+}
+
+.applicant-card.processing {
+    border-color: var(--warning);
+    background: var(--warning-light);
+}
+
+.applicant-card.completed,
+.applicant-card.slot-found {
     border-color: var(--success);
     background: var(--success-light);
 }
@@ -261,6 +294,27 @@ body {
 .applicant-card.failed {
     border-color: var(--danger);
     background: var(--danger-light);
+}
+
+.applicant-card.no-slot {
+    border-color: var(--border);
+    background: var(--bg-tertiary);
+}
+
+/* Checkbox */
+.applicant-checkbox {
+    display: flex;
+    align-items: center;
+    margin-right: var(--space-md);
+    flex-shrink: 0;
+}
+
+.applicant-checkbox input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    margin: 0;
 }
 
 /* Status Badge */
@@ -276,7 +330,13 @@ body {
     vertical-align: middle;
 }
 
-.status-badge.completed {
+.status-badge.completed,
+.status-badge.slot-found {
+    background: var(--success);
+    color: white;
+}
+
+.status-badge.slot_found {
     background: var(--success);
     color: white;
 }
@@ -289,6 +349,17 @@ body {
 .status-badge.processing {
     background: var(--warning);
     color: white;
+}
+
+.status-badge.no-slot,
+.status-badge.no_slot {
+    background: var(--text-muted);
+    color: white;
+}
+
+.status-badge.pending {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
 }
 
 .action-btn.reset:hover {
@@ -309,10 +380,12 @@ body {
     font-weight: 600;
     color: var(--text-secondary);
     margin-right: var(--space-md);
+    flex-shrink: 0;
 }
 
 .applicant-info {
     flex: 1;
+    min-width: 0;
 }
 
 .applicant-passport {
@@ -328,6 +401,7 @@ body {
     font-size: 0.8125rem;
     color: var(--text-secondary);
     margin-top: var(--space-xs);
+    flex-wrap: wrap;
 }
 
 .applicant-actions {
@@ -365,6 +439,31 @@ body {
     color: var(--danger);
 }
 
+/* Selection Actions Bar */
+.selection-actions {
+    display: flex;
+    gap: var(--space-md);
+    padding-top: var(--space-lg);
+    margin-top: var(--space-lg);
+    border-top: 1px solid var(--border);
+}
+
+.selection-actions.hidden {
+    display: none;
+}
+
+.btn-run-selected {
+    flex: 1;
+    padding: var(--space-md);
+    background: var(--success);
+    color: white;
+    font-weight: 600;
+}
+
+.btn-run-selected:hover {
+    background: #009060;
+}
+
 /* ============================================
    Controls Panel
    ============================================ */
@@ -395,6 +494,37 @@ body {
     font-size: 0.8125rem;
     color: var(--text-muted);
     margin-bottom: var(--space-md);
+}
+
+/* Parallel Sessions Setting */
+.parallel-setting {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.parallel-setting label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.select-input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.select-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
 }
 
 /* Section Header Row */
@@ -560,53 +690,6 @@ body {
     opacity: 1;
 }
 
-/* Schedule Inputs (legacy - keeping for compatibility) */
-.schedule-inputs {
-    display: flex;
-    align-items: flex-end;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-}
-
-.time-input-group {
-    flex: 1;
-}
-
-.time-input-group label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-    margin-bottom: var(--space-xs);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.time-input {
-    width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    font-family: var(--font-mono);
-    font-size: 1.125rem;
-    font-weight: 600;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    text-align: center;
-    transition: all var(--transition-fast);
-}
-
-.time-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    background: var(--bg-secondary);
-}
-
-.time-separator {
-    padding-bottom: var(--space-sm);
-    color: var(--text-muted);
-}
-
 /* Toggle Switch */
 .schedule-toggle {
     display: flex;
@@ -716,16 +799,151 @@ body {
     font-size: 0.875rem;
 }
 
-/* Log Container */
-.log-section {
-    flex: 1;
+/* ============================================
+   Sessions Panel (NEW)
+   ============================================ */
+
+.sessions-panel {
+    margin-top: var(--space-xl);
+    animation: slideInUp 0.3s ease;
+}
+
+.sessions-panel.hidden {
+    display: none;
+}
+
+.session-summary {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.sessions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+}
+
+.session-card {
+    padding: var(--space-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--text-muted);
+    transition: all var(--transition-fast);
+}
+
+.session-card.starting {
+    border-left-color: var(--text-muted);
+}
+
+.session-card.logging_in,
+.session-card.logging-in {
+    border-left-color: var(--warning);
+    background: var(--warning-light);
+}
+
+.session-card.polling {
+    border-left-color: var(--accent);
+    animation: session-pulse 2s infinite;
+}
+
+.session-card.slot_found,
+.session-card.slot-found {
+    border-left-color: var(--success);
+    background: var(--success-light);
+}
+
+.session-card.completed {
+    border-left-color: var(--text-muted);
+}
+
+.session-card.failed {
+    border-left-color: var(--danger);
+    background: var(--danger-light);
+}
+
+.session-card.stopped {
+    border-left-color: var(--text-muted);
+    opacity: 0.7;
+}
+
+@keyframes session-pulse {
+    0%, 100% { background: var(--bg-tertiary); }
+    50% { background: var(--accent-light); }
+}
+
+.session-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.session-passport {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+.session-status {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.session-card.polling .session-status {
+    background: var(--accent-light);
+    color: var(--accent);
+}
+
+.session-card.slot_found .session-status,
+.session-card.slot-found .session-status {
+    background: var(--success);
+    color: white;
+}
+
+.session-card.failed .session-status {
+    background: var(--danger);
+    color: white;
+}
+
+.session-details {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.session-detail-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: var(--space-xs);
+}
+
+.session-detail-label {
+    color: var(--text-muted);
+}
+
+.session-detail-value {
+    font-family: var(--font-mono);
+    color: var(--text-primary);
+}
+
+/* ============================================
+   Log Panel
+   ============================================ */
+
+.log-panel {
+    margin-top: var(--space-xl);
 }
 
 .log-container {
     background: var(--bg-tertiary);
     border-radius: var(--radius-sm);
     padding: var(--space-md);
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
     font-family: var(--font-mono);
     font-size: 0.75rem;
@@ -750,6 +968,68 @@ body {
 
 .log-entry.error .log-message {
     color: var(--danger);
+}
+
+.log-entry.info .log-message {
+    color: var(--accent);
+}
+
+/* ============================================
+   Slot Found Alert (NEW)
+   ============================================ */
+
+.slot-alert-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 46, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+    animation: fadeIn 0.3s ease;
+}
+
+.slot-alert-overlay.hidden {
+    display: none;
+}
+
+.slot-alert {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    text-align: center;
+    max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    animation: slideInUp 0.3s ease;
+}
+
+.slot-alert-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-md);
+}
+
+.slot-alert h2 {
+    font-size: 1.5rem;
+    color: var(--success);
+    margin-bottom: var(--space-lg);
+}
+
+.slot-details {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+    text-align: left;
+}
+
+.slot-details p {
+    margin: var(--space-xs) 0;
+    font-size: 0.875rem;
+}
+
+.slot-details strong {
+    color: var(--text-primary);
 }
 
 /* ============================================
@@ -996,6 +1276,10 @@ body {
 
 .toast.error {
     border-left: 3px solid var(--danger);
+}
+
+.toast.warning {
+    border-left: 3px solid var(--warning);
 }
 
 /* ============================================

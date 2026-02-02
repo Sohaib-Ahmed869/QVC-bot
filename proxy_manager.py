@@ -1,7 +1,3 @@
-"""
-Proxy rotation manager for Data Impulse residential proxies
-"""
-
 import asyncio
 import random
 import string
@@ -20,21 +16,15 @@ class ProxyConfig:
     username: str
     password: str
     
-    # Session ID for tracking (only used if use_sticky_session=True)
+    
     session_id: Optional[str] = None
     
-    # Whether to append session suffix (only for Sticky mode in dashboard)
+   
     use_sticky_session: bool = False
     
     @property
     def session_username(self) -> str:
-        """
-        Username for proxy auth.
-        
-        Data Impulse modes:
-        - Rotating: use plain login (each request = new IP)
-        - Sticky: use login-session-XXXX (same IP for session duration)
-        """
+
         if self.use_sticky_session and self.session_id:
             return f"{self.username}-session-{self.session_id}"
         return self.username
@@ -64,20 +54,7 @@ class ProxyConfig:
 
 
 class ProxyManager:
-    """
-    Manages proxy rotation with Data Impulse residential proxies.
-    
-    Modes:
-    - Rotating (default): Each browser restart = new IP automatically
-    - Sticky: Same IP maintained via session suffix (requires dashboard setting)
-    
-    Rotation triggers:
-    - HTTP 429 (rate limited)
-    - Connection refused/timeout
-    - CAPTCHA solve fails 3+ times consecutively
-    - Manual rotation request
-    """
-    
+   
     # Data Impulse endpoints
     DEFAULT_HOST = "gw.dataimpulse.com"
     DEFAULT_PORT = 823  # HTTP port
@@ -90,7 +67,7 @@ class ProxyManager:
         port: int = None,
         sticky_duration_mins: int = 10,
         max_rotations_per_session: int = 20,
-        use_sticky_session: bool = False,  # Set True ONLY if "Sticky" is enabled in Data Impulse dashboard
+        use_sticky_session: bool = False, 
     ):
         self.base_config = ProxyConfig(
             host=host or self.DEFAULT_HOST,
@@ -134,12 +111,7 @@ class ProxyManager:
         self._consecutive_failures = 0
     
     async def report_failure(self, error_type: str) -> bool:
-        """
-        Call after failed request. Returns True if rotation was triggered.
-        
-        Args:
-            error_type: 'rate_limit', 'connection', 'captcha', 'blocked'
-        """
+
         self._consecutive_failures += 1
         
         # Immediate rotation triggers
@@ -161,8 +133,6 @@ class ProxyManager:
         try:
             proxy_url = self.current.url
             
-            # httpx 0.24+ uses 'proxy' parameter, older versions use 'proxies'
-            # Try the newer syntax first, fall back to mounts if needed
             try:
                 # Newer httpx (0.24+) - single proxy parameter
                 async with httpx.AsyncClient(
@@ -175,7 +145,7 @@ class ProxyManager:
                         logger.info(f"Current proxy IP: {ip}")
                         return ip
             except TypeError:
-                # Older httpx - use mounts
+                
                 mounts = {
                     "http://": httpx.AsyncHTTPTransport(proxy=proxy_url),
                     "https://": httpx.AsyncHTTPTransport(proxy=proxy_url),
@@ -252,7 +222,7 @@ async def _test_proxy():
     print("Data Impulse Proxy Test")
     print("=" * 50)
     
-    # use_sticky_session=False for Rotating mode (default in dashboard)
+  
     pm = ProxyManager(
         username=username,
         password=password,

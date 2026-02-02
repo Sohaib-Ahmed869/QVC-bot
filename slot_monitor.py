@@ -109,10 +109,7 @@ class SlotHunter:
         self._session_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # For logging
     
     async def _log_html_snapshot(self, event_name: str, selector: str = None):
-        """
-        Capture and log HTML snapshot for debugging.
-        Saves to debug_html/ directory with timestamp.
-        """
+
         if not self.page:
             return
         
@@ -795,14 +792,7 @@ class SlotHunter:
         on_found: Callable = None,
         on_timeout: Callable = None,
     ) -> Optional[CapturedSlot]:
-        """
-        Hunt with lifecycle callbacks for integration with main bot.
-        
-        Args:
-            on_poll: Called each poll cycle with (poll_count, elapsed_time)
-            on_found: Called when slot found with (CapturedSlot)
-            on_timeout: Called on timeout
-        """
+
         self.on_slot_found = on_found
         
         # Wrap hunt with callbacks

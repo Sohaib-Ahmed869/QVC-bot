@@ -135,42 +135,23 @@ console.log('Proxy auth extension loaded');
         """Initialize browser with Docker/production-ready settings"""
         logger.info("Starting browser...")
         
-        # CRITICAL: Docker-compatible Chrome arguments
+        # Minimal Chrome arguments for Windows - prioritize stability
         browser_args = [
-            # ESSENTIAL for Docker
-            "--no-sandbox",
-            "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
-            
-            # Performance & stability
-            "--disable-gpu",
-            "--disable-software-rasterizer",
-            "--disable-extensions",
-            "--disable-background-networking",
-            "--disable-default-apps",
-            "--disable-sync",
-            "--disable-translate",
-            
-            # Anti-detection
-            "--disable-blink-features=AutomationControlled",
-            
             # Display
             "--window-size=1920,1080",
             "--start-maximized",
             
-            # Network
-            "--disable-web-security",
-            "--ignore-certificate-errors",
-            "--disable-features=IsolateOrigins,site-per-process",
+            # Anti-detection (essential)
+            "--disable-blink-features=AutomationControlled",
             
-            # Memory optimization for Docker
-            "--disable-dev-shm-usage",
+            # Speed optimizations
+            "--disable-extensions",
+            "--disable-default-apps",
+            "--disable-sync",
+            "--disable-translate",
+            "--mute-audio",
             "--no-first-run",
             "--no-default-browser-check",
-            "--no-zygote",
-            
-            # DNS & proxy friendly
-            "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE localhost",
         ]
         
         # Configure proxy if enabled
@@ -216,8 +197,8 @@ console.log('Proxy auth extension loaded');
                 try:
                     self.page = await self.browser.get(config.BASE_URL, new_tab=False)
                     
-                    # Wait for page to load
-                    await asyncio.sleep(3)
+                    # Reduced wait time for faster loading
+                    await asyncio.sleep(2)
                     
                     # Verify page loaded
                     try:
@@ -234,7 +215,7 @@ console.log('Proxy auth extension loaded');
                         # Check if we got a real page
                         if "qatarvisacenter" not in str(url).lower() and attempt < max_nav_retries - 1:
                             logger.warning(f"Unexpected URL: {url}, retrying...")
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(2)
                             continue
                         
                         break  # Success
@@ -242,14 +223,14 @@ console.log('Proxy auth extension loaded');
                     except Exception as e:
                         logger.warning(f"Page verification failed (attempt {attempt + 1}): {e}")
                         if attempt < max_nav_retries - 1:
-                            await asyncio.sleep(3)
+                            await asyncio.sleep(2)
                         else:
                             raise
                     
                 except Exception as e:
                     logger.warning(f"Navigation attempt {attempt + 1} failed: {e}")
                     if attempt < max_nav_retries - 1:
-                        await asyncio.sleep(3)
+                        await asyncio.sleep(2)
                     else:
                         raise ConnectionError(f"Failed to load {config.BASE_URL} after {max_nav_retries} attempts")
             

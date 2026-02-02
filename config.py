@@ -27,10 +27,10 @@ class Config:
     CAPTCHA_MAX_RETRIES: int = 3
     PAGE_LOAD_TIMEOUT: int = 30
     ELEMENT_WAIT_TIMEOUT: int = 10
-    POLL_INTERVAL: float = 2.0  # Seconds between slot checks
+    POLL_INTERVAL: float = 4.0  # Seconds between slot checks
     
-  
-    HEADLESS: bool = False  # Set True for production
+
+    HEADLESS: bool = False  
     
     # Proxy settings (Data Impulse) - Loaded from .env
     PROXY_ENABLED: bool = os.getenv("PROXY_ENABLED", "False").lower() == "true"
@@ -43,7 +43,7 @@ class Config:
     
     # Session rotation settings (to avoid IP blocking)
     SESSION_DURATION_MINUTES: int = 5      # How long each browser session runs before rotating
-    SESSION_GAP_SECONDS: int = 5          # Delay between closing and starting new session2344324
+    SESSION_GAP_SECONDS: int = 4          # Delay between closing and starting new session
     
     # Logging
     LOG_FILE: str = "visa_bot.log"

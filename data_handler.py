@@ -8,9 +8,9 @@ from config import Applicant
 
 logger = logging.getLogger(__name__)
 
-
+ 
 class DataHandler:
-    # Expected column mapping (case-insensitive)
+  
     COLUMN_MAP = {
         "country": ["country", "nationality", "nation"],
         "passport_number": ["passport number", "passport", "passport no", "passport_number"],
@@ -133,10 +133,6 @@ class DataHandler:
 
 
 class JsonDataHandler:
-    """
-    Load applicants from JSON file (for web interface).
-    Provides the same interface as DataHandler for compatibility.
-    """
     
     JSON_FILE = Path(__file__).parent / "applicants.json"
     

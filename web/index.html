@@ -39,7 +39,10 @@
             <!-- Left Panel: Applicants -->
             <section class="panel applicants-panel">
                 <div class="panel-header">
-                    <h2>Applicant Queue</h2>
+                    <div class="panel-header-left">
+                        <h2>Applicant Queue</h2>
+                        <span class="selection-info" id="selectionInfo"></span>
+                    </div>
                     <button class="btn btn-primary" id="addApplicantBtn">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                             <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
@@ -61,10 +64,37 @@
                         <span>Add your first applicant to get started</span>
                     </div>
                 </div>
+
+                <!-- Selection Actions Bar (appears when applicants selected) -->
+                <div class="selection-actions hidden" id="selectionActions">
+                    <button class="btn btn-run-selected" id="runSelectedBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M5 3L13 8L5 13V3Z" fill="currentColor" />
+                        </svg>
+                        Run Selected (<span id="selectedCount">0</span>)
+                    </button>
+                    <button class="btn btn-secondary" id="clearSelectionBtn">Clear Selection</button>
+                </div>
             </section>
 
             <!-- Right Panel: Schedule & Controls -->
             <aside class="panel controls-panel">
+                <!-- Parallel Sessions Setting -->
+                <div class="control-section">
+                    <h3>Parallel Sessions</h3>
+                    <p class="section-desc">Run multiple applicants simultaneously</p>
+                    
+                    <div class="parallel-setting">
+                        <label for="maxParallel">Max Concurrent Sessions</label>
+                        <select id="maxParallel" class="select-input">
+                            <option value="1">1 (Sequential)</option>
+                            <option value="2" selected>2 Sessions</option>
+                            <option value="3">3 Sessions</option>
+                            <option value="4">4 Sessions</option>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- Schedule Section -->
                 <div class="control-section">
                     <div class="section-header-row">
@@ -138,22 +168,48 @@
                         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                             <rect x="5" y="5" width="10" height="10" rx="1" fill="currentColor" />
                         </svg>
-                        Stop
+                        Stop All Sessions
                     </button>
-                </div>
-
-                <!-- Status Log -->
-                <div class="control-section log-section">
-                    <h3>Activity Log</h3>
-                    <div class="log-container" id="logContainer">
-                        <div class="log-entry">
-                            <span class="log-time">--:--</span>
-                            <span class="log-message">Waiting for activity...</span>
-                        </div>
-                    </div>
                 </div>
             </aside>
         </main>
+
+        <!-- Active Sessions Panel (appears when bot is running) -->
+        <section class="panel sessions-panel hidden" id="sessionsPanel">
+            <div class="panel-header">
+                <h2>Active Sessions</h2>
+                <span class="session-summary" id="sessionSummary">0 / 0 running</span>
+            </div>
+            <div class="sessions-grid" id="sessionsGrid">
+                <!-- Session cards will be inserted here -->
+            </div>
+        </section>
+
+        <!-- Activity Log -->
+        <section class="panel log-panel">
+            <div class="panel-header">
+                <h3>Activity Log</h3>
+                <button class="btn btn-small btn-secondary" id="clearLogsBtn">Clear</button>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry">
+                    <span class="log-time">--:--</span>
+                    <span class="log-message">Waiting for activity...</span>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Slot Found Alert Modal -->
+    <div class="slot-alert-overlay hidden" id="slotAlertOverlay">
+        <div class="slot-alert">
+            <div class="slot-alert-icon">🎉</div>
+            <h2>Slot Found!</h2>
+            <div class="slot-details" id="slotDetails">
+                <!-- Slot details will be inserted here -->
+            </div>
+            <button class="btn btn-primary" id="dismissSlotAlert">Dismiss</button>
+        </div>
     </div>
 
     <!-- Modal: Add/Edit Applicant -->
