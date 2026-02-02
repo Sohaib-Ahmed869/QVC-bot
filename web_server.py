@@ -332,126 +332,140 @@ class ParallelBotRunner:
         """
         Run a single browser session for one applicant.
         This is the worker function that runs in parallel.
+        Automatically restarts with new IP after session duration (5 min).
         """
         from browser_engine import BrowserEngine
         from config import Applicant as ConfigApplicant
         
         session_id = session.session_id
         passport = session.passport_number
+        rotation_count = 0
+        max_rotations = config.PROXY_MAX_ROTATIONS if config.PROXY_ENABLED else 1
         
-        try:
-            self.add_log(f"Starting session...", session_id=session_id, passport=passport)
-            session.status = "starting"
+        # Create applicant config object (reused across rotations)
+        app_obj = ConfigApplicant(
+            country=applicant_data["country"],
+            passport_number=applicant_data["passport_number"],
+            visa_number=applicant_data["visa_number"],
+            mobile=applicant_data["mobile"],
+            email=applicant_data["email"],
+            row_index=0
+        )
+        
+        # Loop to restart with new IP after each session duration
+        while rotation_count < max_rotations and not self._stop_requested and not self._slot_found:
+            rotation_count += 1
+            browser = None
             
-            # Create applicant config object
-            app_obj = ConfigApplicant(
-                country=applicant_data["country"],
-                passport_number=applicant_data["passport_number"],
-                visa_number=applicant_data["visa_number"],
-                mobile=applicant_data["mobile"],
-                email=applicant_data["email"],
-                row_index=0
-            )
-            
-            # Rotate proxy to get unique IP
-            if proxy_manager:
-                await proxy_manager.rotate(reason="new_parallel_session")
-            
-            # Create browser engine
-            browser = BrowserEngine(proxy_manager=proxy_manager)
-            session.browser = browser
-            
-            # Start browser
-            await browser.start()
-            
-            # Verify and log IP
-            if proxy_manager:
-                ip = await proxy_manager.verify_ip()
-                session.ip = ip
-                self.add_log(f"Connected with IP: {ip}", session_id=session_id, passport=passport)
-            
-            # Check if stop requested
-            if self._stop_requested or self._slot_found:
-                self.add_log("Stop requested, closing session", session_id=session_id, passport=passport)
+            try:
+                if rotation_count == 1:
+                    self.add_log(f"Starting session...", session_id=session_id, passport=passport)
+                else:
+                    self.add_log(f"Rotating IP (rotation {rotation_count}/{max_rotations})...", session_id=session_id, passport=passport)
+                
+                session.status = "starting"
+                
+                # Rotate proxy to get unique IP
+                if proxy_manager:
+                    await proxy_manager.rotate(reason=f"rotation_{rotation_count}")
+                
+                # Create browser engine
+                browser = BrowserEngine(proxy_manager=proxy_manager)
+                session.browser = browser
+                
+                # Start browser
+                await browser.start()
+                
+                # Verify and log IP
+                if proxy_manager:
+                    ip = await proxy_manager.verify_ip()
+                    session.ip = ip
+                    self.add_log(f"Connected with IP: {ip}", session_id=session_id, passport=passport)
+                
+                # Check if stop requested
+                if self._stop_requested or self._slot_found:
+                    self.add_log("Stop requested, closing session", session_id=session_id, passport=passport)
+                    await browser.close()
+                    session.status = "stopped"
+                    return
+                
+                # Calculate session duration (5 min default, or remaining schedule time)
+                session_duration = min(
+                    config.SESSION_DURATION_MINUTES * 60,
+                    self._calculate_remaining_schedule_time()
+                )
+                
+                self.add_log(f"Session duration: {session_duration // 60} min", session_id=session_id, passport=passport)
+                
+                # Update status
+                session.status = "logging_in"
+                
+                # Run the booking pipeline
+                success = await browser.book_appointment(
+                    app_obj,
+                    config.DATE_RANGE_START,
+                    config.DATE_RANGE_END,
+                    max_hunt_duration=session_duration,
+                    center=center
+                )
+                
+                # Close browser before next rotation
                 await browser.close()
+                session.browser = None
+                
+                # Check results
+                if self._slot_found:
+                    session.status = "slot_found"
+                    self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    return
+                elif success:
+                    session.status = "slot_found"
+                    self._slot_found = True
+                    self._slot_details = {
+                        "passport_number": passport,
+                        "session_id": session_id,
+                        "found_at": datetime.now().isoformat()
+                    }
+                    self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    return
+                else:
+                    # No slot found - continue with next rotation
+                    self.add_log(f"No slots found, will rotate IP...", session_id=session_id, passport=passport)
+                    
+                    # Gap between sessions
+                    if rotation_count < max_rotations and not self._stop_requested and not self._slot_found:
+                        await asyncio.sleep(config.SESSION_GAP_SECONDS)
+                    
+            except asyncio.CancelledError:
+                self.add_log(f"Session cancelled", session_id=session_id, passport=passport)
                 session.status = "stopped"
+                if browser:
+                    try:
+                        await browser.close()
+                    except:
+                        pass
+                session.browser = None
                 return
-            
-            # Calculate session duration
-            session_duration = min(
-                config.SESSION_DURATION_MINUTES * 60,
-                self._calculate_remaining_schedule_time()
-            )
-            
-            self.add_log(f"Session duration: {session_duration // 60} min", session_id=session_id, passport=passport)
-            
-            # Update status
-            session.status = "logging_in"
-            
-            # Define slot found callback
-            async def on_slot_found(slot_result):
-                """Called when SlotHunter finds a slot"""
-                self._slot_found = True
-                self._slot_details = {
-                    "passport_number": passport,
-                    "session_id": session_id,
-                    "date": str(slot_result.date),
-                    "time": slot_result.time,
-                    "center": slot_result.center,
-                    "found_at": datetime.now().isoformat()
-                }
-                self.add_log(f"🎉 SLOT FOUND! Date: {slot_result.date}", "success", session_id=session_id, passport=passport)
-            
-            # Run the booking pipeline
-            success = await browser.book_appointment(
-                app_obj,
-                config.DATE_RANGE_START,
-                config.DATE_RANGE_END,
-                max_hunt_duration=session_duration,
-                center=center
-            )
-            
-            # Close browser
-            await browser.close()
-            session.browser = None
-            
-            if self._slot_found and self._slot_details and self._slot_details.get("session_id") == session_id:
-                session.status = "slot_found"
-                self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
-            elif success:
-                session.status = "slot_found"
-                self._slot_found = True
-                self._slot_details = {
-                    "passport_number": passport,
-                    "session_id": session_id,
-                    "found_at": datetime.now().isoformat()
-                }
-                self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
-            else:
-                session.status = "completed"
-                self.add_log(f"Session completed - no slots found", session_id=session_id, passport=passport)
+                    
+            except Exception as e:
+                logger.exception(f"Session error for {passport}: {e}")
+                self.add_log(f"Error: {str(e)[:50]}", "error", session_id=session_id, passport=passport)
                 
-        except asyncio.CancelledError:
-            self.add_log(f"Session cancelled", session_id=session_id, passport=passport)
-            session.status = "stopped"
-            if session.browser:
-                try:
-                    await session.browser.close()
-                except:
-                    pass
-                session.browser = None
+                # Close browser on error
+                if browser:
+                    try:
+                        await browser.close()
+                    except:
+                        pass
+                    session.browser = None
                 
-        except Exception as e:
-            logger.exception(f"Session error for {passport}: {e}")
-            self.add_log(f"Error: {str(e)[:50]}", "error", session_id=session_id, passport=passport)
-            session.status = "failed"
-            session.message = str(e)[:100]
-            if session.browser:
-                try:
-                    await session.browser.close()
-                except:
-                    pass
-                session.browser = None
+                # Continue to next rotation on error (don't give up)
+                self.add_log(f"Retrying with new IP...", session_id=session_id, passport=passport)
+                await asyncio.sleep(config.SESSION_GAP_SECONDS)
+        
+        # Exhausted all rotations
+        session.status = "completed"
+        self.add_log(f"Session completed after {rotation_count} rotations - no slots found", session_id=session_id, passport=passport)
     
     async def run(self, applicant_ids: List[str], center: str = "Islamabad", max_parallel: int = 2):
         """
