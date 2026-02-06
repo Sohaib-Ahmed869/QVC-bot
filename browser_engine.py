@@ -183,8 +183,9 @@ console.log('Proxy auth extension loaded');
                     self.browser = await uc.start(
                         headless=config.HEADLESS,
                         browser_args=browser_args,
-                        no_sandbox=True,  # MUST have this
-                        user_data_dir=f"/tmp/chrome/uc_{uuid.uuid4().hex[:8]}"  # Explicit temp dir
+                        no_sandbox=True,
+                        browser_executable_path='/usr/bin/chromium',  # ← Add this
+                        user_data_dir=f"/tmp/chrome/uc_{uuid.uuid4().hex[:8]}"
                     )
                     logger.info(f"Browser process started (attempt {attempt + 1})")
                     break
