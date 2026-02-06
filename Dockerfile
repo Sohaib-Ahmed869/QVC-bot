@@ -1,67 +1,49 @@
 FROM python:3.10-slim
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:99 \
-    CHROME_BIN=/usr/bin/google-chrome \
     PYTHONDONTWRITEBYTECODE=1
 
-# Install system dependencies and Chrome
+# Install Chromium (lighter than Chrome)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    gnupg \
-    ca-certificates \
+    chromium \
+    chromium-driver \
+    # Required libraries
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
     libatk1.0-0 \
-    libatspi2.0-0 \
     libcups2 \
     libdbus-1-3 \
-    libdrm2 \
     libgbm1 \
     libgtk-3-0 \
     libnspr4 \
     libnss3 \
-    libwayland-client0 \
     libxcomposite1 \
     libxdamage1 \
-    libxfixes3 \
-    libxkbcommon0 \
     libxrandr2 \
     xdg-utils \
-    libu2f-udev \
-    libvulkan1 \
-    && wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
-    && apt-get install -y /tmp/google-chrome.deb \
-    && rm /tmp/google-chrome.deb \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/*
 
-# Verify Chrome installation
-RUN google-chrome --version
+# Verify Chromium
+RUN chromium --version
 
 WORKDIR /app
 
-# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application files
 COPY . .
 
-# Create necessary directories with proper permissions
-RUN mkdir -p logs screenshots data web /tmp/chrome
-
-# Create non-root user AFTER everything is set up
-RUN useradd -m -u 1000 botuser && \
-    chown -R botuser:botuser /app && \
-    chown -R botuser:botuser /tmp/chrome && \
+RUN mkdir -p logs screenshots data web /tmp/chrome && \
     chmod -R 777 /tmp
 
-# Switch to non-root user
+# Run as non-root
+RUN useradd -m -u 1000 botuser && \
+    chown -R botuser:botuser /app
 USER botuser
 
 EXPOSE 8000
