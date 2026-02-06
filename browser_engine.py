@@ -137,7 +137,9 @@ console.log('Proxy auth extension loaded');
         
         # Minimal Chrome arguments for Windows - prioritize stability
         browser_args = [
-         "--no-sandbox",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
             # Display
             "--window-size=1920,1080",
             "--start-maximized",
@@ -180,7 +182,8 @@ console.log('Proxy auth extension loaded');
                     self.browser = await uc.start(
                         headless=config.HEADLESS,
                         browser_args=browser_args,
-                        no_sandbox=True
+                        no_sandbox=True,  # MUST have this
+                        user_data_dir=f"/tmp/chrome/uc_{uuid.uuid4().hex[:8]}"  # Explicit temp dir
                     )
                     logger.info(f"Browser process started (attempt {attempt + 1})")
                     break
