@@ -179,7 +179,8 @@ console.log('Proxy auth extension loaded');
                 try:
                     self.browser = await uc.start(
                         headless=config.HEADLESS,
-                        browser_args=browser_args
+                        browser_args=browser_args,
+                        no_sandbox=True
                     )
                     logger.info(f"Browser process started (attempt {attempt + 1})")
                     break
