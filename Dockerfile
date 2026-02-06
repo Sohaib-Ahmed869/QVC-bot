@@ -1,4 +1,3 @@
-# Dockerfile - Fixed for Debian 13+ (apt-key deprecated)
 FROM python:3.10-slim
 
 # Set environment variables
@@ -8,13 +7,11 @@ ENV PYTHONUNBUFFERED=1 \
     CHROME_BIN=/usr/bin/google-chrome \
     PYTHONDONTWRITEBYTECODE=1
 
-# Install system dependencies and Chrome in one layer
+# Install system dependencies and Chrome
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Essential tools
     wget \
     gnupg \
     ca-certificates \
-    # Chrome dependencies
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -36,10 +33,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xdg-utils \
     libu2f-udev \
     libvulkan1 \
-    # Install Chrome (NEW METHOD - no apt-key)
     && wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
     && apt-get install -y /tmp/google-chrome.deb \
-    # Cleanup
     && rm /tmp/google-chrome.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -47,35 +42,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Verify Chrome installation
 RUN google-chrome --version
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements first (for better caching)
+# Copy and install Python dependencies
 COPY requirements.txt .
-
-# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p logs screenshots data web
+# Create necessary directories with proper permissions
+RUN mkdir -p logs screenshots data web /tmp/chrome
 
-# Create non-root user for security
+# Create non-root user AFTER everything is set up
 RUN useradd -m -u 1000 botuser && \
-    chown -R botuser:botuser /app
+    chown -R botuser:botuser /app && \
+    chown -R botuser:botuser /tmp/chrome && \
+    chmod -R 777 /tmp
 
 # Switch to non-root user
 USER botuser
 
-# Expose port
 EXPOSE 8000
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)" || exit 1
 
-# Run the web server
 CMD ["python", "web_server.py"]
