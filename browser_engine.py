@@ -137,6 +137,7 @@ console.log('Proxy auth extension loaded');
         
         # Minimal Chrome arguments for Windows - prioritize stability
         browser_args = [
+         "--no-sandbox",
             # Display
             "--window-size=1920,1080",
             "--start-maximized",
