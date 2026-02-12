@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxdamage1 \
     libxrandr2 \
     xdg-utils \
+    # Required by onnxruntime (ddddocr dependency)
+    libgomp1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

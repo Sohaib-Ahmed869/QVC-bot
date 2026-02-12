@@ -1,0 +1,77 @@
+2026-02-12 17:28:33,117 | INFO     | __main__ | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-02-12 17:28:33,381 | INFO     | web_server | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-02-12 17:28:33,390 | INFO     | web_server | Scheduler started
+2026-02-12 17:28:33,390 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-12 18:04:15,493 | INFO     | web_server | Bot started for 1 applicants (max parallel: 1)
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] ==================================================
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] Max parallel: 1
+2026-02-12 18:04:15,499 | INFO     | web_server | [Bot] ==================================================
+2026-02-12 18:04:15,511 | INFO     | web_server | [Bot] [QU1181251] Created session 1/1
+2026-02-12 18:04:15,971 | INFO     | web_server | [Bot] [QU1181251] Starting session...
+2026-02-12 18:04:15,971 | INFO     | proxy_manager | Rotating proxy session: None -> 173ev8z0
+2026-02-12 18:04:15,973 | INFO     | proxy_manager | Proxy rotated (reason: rotation_1) | Count: 1 | Session: 173ev8z0
+2026-02-12 18:04:17,313 | INFO     | captcha_solver | Local OCR (ddddocr) initialized
+2026-02-12 18:04:17,313 | INFO     | browser_engine | Starting browser...
+2026-02-12 18:04:17,313 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-12 18:04:17,313 | INFO     | browser_engine | Session ID: 173ev8z0
+2026-02-12 18:04:17,347 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-12 18:04:17,348 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\calci\AppData\Local\Temp\chrome_uc_045fd255
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=65472
+2026-02-12 18:04:17,780 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-12 18:04:20,506 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-12 18:04:34,787 | INFO     | web_server | Force stop initiated for all sessions
+2026-02-12 18:04:34,789 | INFO     | web_server | Browser force closed for session sess_2ca294f0
+2026-02-12 18:04:34,789 | INFO     | web_server | [Bot] All sessions force stopped
+2026-02-12 18:04:34,789 | INFO     | web_server | Bot stopped by user
+2026-02-12 18:04:34,790 | INFO     | web_server | [Bot] [QU1181251] Session cancelled
+2026-02-12 18:04:34,799 | INFO     | web_server | [Bot] ==================================================
+2026-02-12 18:04:34,799 | INFO     | web_server | [Bot] All sessions completed - no slots found
+2026-02-12 18:04:34,799 | INFO     | web_server | [Bot] ==================================================
+2026-02-12 18:04:34,800 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped

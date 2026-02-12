@@ -42,6 +42,7 @@ class CaptchaSolver:
         Returns: Captcha text or None if failed
         """
         if not self.ocr:
+            logger.warning("Local OCR skipped: ddddocr not initialized")
             return None
         
         try:
