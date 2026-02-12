@@ -214,10 +214,26 @@ console.log('Proxy auth extension loaded');
             username = self._current_proxy.session_username
             password = self._current_proxy.password
             
-            # Enable Fetch domain with auth interception only
-            # (does NOT pause regular requests — only intercepts 407 auth challenges)
+            # Enable Fetch domain with auth interception.
+            # NOTE: handle_auth_requests=True without patterns intercepts ALL
+            # requests, so we MUST handle RequestPaused to continue them.
             await tab.send(cdp.fetch.enable(handle_auth_requests=True))
-            
+
+            # Handler for paused requests — continue them immediately so the
+            # browser doesn't hang waiting for us to act on every request.
+            def _handle_request_paused(event: cdp.fetch.RequestPaused, connection):
+                """Let normal requests through without modification"""
+                try:
+                    asyncio.ensure_future(
+                        connection.send(cdp.fetch.continue_request(
+                            request_id=event.request_id
+                        ))
+                    )
+                except Exception as e:
+                    logger.warning(f"Request continue error: {e}")
+
+            tab.add_handler(cdp.fetch.RequestPaused, _handle_request_paused)
+
             # Handler for proxy 407 auth challenges
             def _handle_proxy_auth(event: cdp.fetch.AuthRequired, connection):
                 """Respond to proxy auth challenge with credentials"""
@@ -234,7 +250,7 @@ console.log('Proxy auth extension loaded');
                     )
                 except Exception as e:
                     logger.warning(f"Proxy auth handler error: {e}")
-            
+
             tab.add_handler(cdp.fetch.AuthRequired, _handle_proxy_auth)
             logger.info("CDP proxy auth handler configured")
             
@@ -334,8 +350,11 @@ console.log('Proxy auth extension loaded');
             
             for attempt in range(max_nav_retries):
                 try:
-                    self.page = await self.browser.get(config.BASE_URL, new_tab=False)
-                    
+                    self.page = await asyncio.wait_for(
+                        self.browser.get(config.BASE_URL, new_tab=False),
+                        timeout=30
+                    )
+
                     # Reduced wait time for faster loading
                     await asyncio.sleep(2)
                     
