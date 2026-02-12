@@ -25,9 +25,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so you don't need to check them into git
+
 *.manifest
 *.spec
 

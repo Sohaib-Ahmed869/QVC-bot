@@ -49,10 +49,13 @@ RUN useradd -m -u 1000 botuser && \
     chown -R botuser:botuser /app
 USER botuser
 
+# NOTE: Run with --shm-size=2g for 10 parallel browser sessions:
+#   docker run --shm-size=2g -p 8000:8000 qatar-visa-bot
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)" || exit 1
 
-# Start Xvfb (virtual display) as fallback, then run the app
-CMD Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &>/dev/null & sleep 1 && python web_server.py
+# Start Xvfb (virtual display) then run the app
+# Use 16-bit color depth to save memory with 10 browser instances
+CMD Xvfb :99 -screen 0 1920x1080x16 -nolisten tcp &>/dev/null & sleep 1 && python web_server.py

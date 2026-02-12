@@ -527,6 +527,43 @@ body {
     box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.number-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.number-input {
+    width: 80px;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-mono);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    transition: all var(--transition-fast);
+    -moz-appearance: textfield;
+}
+
+.number-input::-webkit-inner-spin-button,
+.number-input::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+.number-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.number-input-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
 /* Section Header Row */
 .section-header-row {
     display: flex;

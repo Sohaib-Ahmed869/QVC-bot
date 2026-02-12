@@ -57,7 +57,10 @@ function setupEventListeners() {
     });
 
     document.getElementById('maxParallel').addEventListener('change', (e) => {
-        settings.max_parallel = parseInt(e.target.value);
+        let value = parseInt(e.target.value);
+        if (isNaN(value) || value < 1) value = 1;
+        e.target.value = value;
+        settings.max_parallel = value;
         saveSettings();
         if (selectedIds.size > settings.max_parallel) {
             selectedIds = new Set(Array.from(selectedIds).slice(0, settings.max_parallel));
@@ -181,7 +184,9 @@ async function loadSettings() {
         const response = await fetch(`${API_BASE}/api/settings`);
         if (response.ok) {
             settings = await response.json();
-            document.getElementById('maxParallel').value = settings.max_parallel || 2;
+            const value = Math.max(1, settings.max_parallel || 2);
+            settings.max_parallel = value;
+            document.getElementById('maxParallel').value = value;
         }
     } catch (error) { console.error('Failed to load settings:', error); }
 }

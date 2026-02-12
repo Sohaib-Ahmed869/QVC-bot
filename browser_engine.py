@@ -280,15 +280,32 @@ console.log('Proxy auth extension loaded');
             # Display
             "--window-size=1920,1080",
             "--start-maximized",
-            
+
             # Anti-detection (essential)
             "--disable-blink-features=AutomationControlled",
-            
+
             # Speed optimizations
             "--disable-default-apps",
             "--disable-sync",
             "--disable-translate",
             "--mute-audio",
+
+            # Memory optimizations (critical for running 10 instances on 8GB)
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            "--disable-extensions",
+            "--disable-background-networking",
+            "--disable-background-timer-throttling",
+            "--disable-backgrounding-occluded-windows",
+            "--disable-renderer-backgrounding",
+            "--disable-component-update",
+            "--disable-hang-monitor",
+            "--disable-popup-blocking",
+            "--disable-prompt-on-repost",
+            "--metrics-recording-only",
+            "--no-zygote",
+            "--single-process",
+            "--js-flags=--max-old-space-size=128",
         ]
         
         # Use configured headless setting (Xvfb provides virtual display in Docker)

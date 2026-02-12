@@ -80,8 +80,8 @@ class Schedule(BaseModel):
 
 class BotRunRequest(BaseModel):
     center: str = "Islamabad"
-    applicant_ids: List[str] = []  # NEW: Specific applicants to run
-    max_parallel: int = 2  # NEW: Max parallel sessions (1-4)
+    applicant_ids: List[str] = []  # Specific applicants to run
+    max_parallel: int = 2  # Max parallel sessions (minimum 1)
 
 class SessionStatus(BaseModel):
     """Status of a single parallel session"""
@@ -120,7 +120,7 @@ def load_data() -> dict:
             "days": []
         },
         "settings": {
-            "max_parallel": 2
+            "max_parallel": 10
         }
     }
 
@@ -194,7 +194,7 @@ class ParallelBotRunner:
     Each applicant runs in its own browser with its own proxy IP.
     """
     
-    MAX_PARALLEL_LIMIT = 4  # Hard limit
+    MAX_PARALLEL_LIMIT = None  # No hard limit — user decides
     
     def __init__(self):
         self.running = False
@@ -221,11 +221,11 @@ class ParallelBotRunner:
             "type": log_type,
             "session_id": session_id
         })
-        # Keep only last 200 logs (more for parallel sessions)
-        if len(self.logs) > 200:
-            trim_count = len(self.logs) - 200
+        # Keep only last 500 logs (enough for 10 parallel sessions)
+        if len(self.logs) > 500:
+            trim_count = len(self.logs) - 500
             self._log_cursor = max(0, self._log_cursor - trim_count)
-            self.logs = self.logs[-200:]
+            self.logs = self.logs[-500:]
         logger.info(f"[Bot] {prefix}{message}")
     
     def get_logs_since(self, cursor: int = 0) -> tuple:
@@ -478,8 +478,8 @@ class ParallelBotRunner:
         self.sessions.clear()
         self._proxy_managers.clear()
         
-        # Validate max_parallel
-        max_parallel = min(max(1, max_parallel), self.MAX_PARALLEL_LIMIT)
+        # Validate max_parallel (minimum 1)
+        max_parallel = max(1, max_parallel)
         
         self.add_log(f"=" * 50)
         self.add_log(f"PARALLEL BOT STARTED")
@@ -538,11 +538,11 @@ class ParallelBotRunner:
                 session.task = task
                 tasks.append(task)
                 
-                self.add_log(f"Created session {i+1}/{min(len(selected_applicants), max_parallel)}", 
+                self.add_log(f"Created session {i+1}/{min(len(selected_applicants), max_parallel)}",
                            session_id=session_id, passport=applicant["passport_number"])
-                
-                # Small delay between starting sessions to stagger them
-                await asyncio.sleep(2)
+
+                # Stagger session starts to avoid CPU/memory spike
+                await asyncio.sleep(5)
             
             # Wait for all tasks to complete OR slot found OR stop requested
             self.add_log(f"All {len(tasks)} sessions started, waiting for completion...")
@@ -938,7 +938,7 @@ async def get_settings():
     """Get bot settings"""
     data = load_data()
     settings = data.get("settings", {
-        "max_parallel": 2
+        "max_parallel": 10
     })
     return settings
 
@@ -949,7 +949,7 @@ async def update_settings(settings: dict):
     
     # Validate max_parallel
     if "max_parallel" in settings:
-        settings["max_parallel"] = min(max(1, int(settings["max_parallel"])), ParallelBotRunner.MAX_PARALLEL_LIMIT)
+        settings["max_parallel"] = max(1, int(settings["max_parallel"]))
     
     data["settings"] = {**data.get("settings", {}), **settings}
     save_data(data)
@@ -1008,7 +1008,7 @@ async def run_bot(background_tasks: BackgroundTasks, request: BotRunRequest):
         raise HTTPException(status_code=400, detail=f"Invalid applicant IDs: {invalid_ids}")
     
     # Validate max_parallel
-    max_parallel = min(max(1, request.max_parallel), ParallelBotRunner.MAX_PARALLEL_LIMIT)
+    max_parallel = max(1, request.max_parallel)
     
     # Use all provided applicant_ids (max_parallel controls how many run simultaneously)
     applicant_ids = request.applicant_ids
@@ -1050,7 +1050,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print(f"\nServer starting on {host}:{port}")
     print(f"Open in browser: http://localhost:{port}")
-    print(f"Max parallel sessions: {ParallelBotRunner.MAX_PARALLEL_LIMIT}")
+    print(f"Max parallel sessions: No limit (user-defined)")
     print("Press Ctrl+C to stop\n")
     
     uvicorn.run(

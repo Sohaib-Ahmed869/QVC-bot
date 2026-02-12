@@ -86,12 +86,10 @@
                     
                     <div class="parallel-setting">
                         <label for="maxParallel">Max Concurrent Sessions</label>
-                        <select id="maxParallel" class="select-input">
-                            <option value="1">1 (Sequential)</option>
-                            <option value="2" selected>2 Sessions</option>
-                            <option value="3">3 Sessions</option>
-                            <option value="4">4 Sessions</option>
-                        </select>
+                        <div class="number-input-group">
+                            <input type="number" id="maxParallel" class="number-input" min="1" step="1" value="2">
+                            <span class="number-input-hint">Min: 1 session</span>
+                        </div>
                     </div>
                 </div>
 
