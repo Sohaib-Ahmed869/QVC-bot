@@ -1,20 +1,3 @@
-"""
-Bandwidth Monitor for Visa Bot (Fixed for nodriver)
-Tracks actual data consumption per session using Chrome DevTools Protocol.
-
-Usage:
-    from bandwidth_monitor import bandwidth_monitor
-    
-    # In browser_engine.py after getting page:
-    await bandwidth_monitor.attach_to_page(page)
-    
-    # Before processing applicant:
-    bandwidth_monitor.start_session("PASSPORT123")
-    
-    # After processing:
-    bandwidth_monitor.print_report()
-    bandwidth_monitor.end_session()
-"""
 
 import asyncio
 import json
@@ -94,11 +77,7 @@ class SessionStats:
 
 
 class BandwidthMonitor:
-    """
-    Tracks bandwidth consumption using Chrome DevTools Protocol (CDP).
-    Fixed for nodriver's specific API.
-    """
-    
+   
     def __init__(self, log_file: str = "bandwidth_log.json"):
         self.log_file = Path(log_file)
         self.sessions: List[SessionStats] = []
@@ -109,13 +88,7 @@ class BandwidthMonitor:
         self._page = None
         
     async def attach_to_page(self, page) -> bool:
-        """
-        Attach CDP listeners to track network traffic.
-        Call this after browser.get() or page creation.
-        
-        Args:
-            page: nodriver Tab object
-        """
+
         if not HAS_NODRIVER:
             logger.error("nodriver not available")
             return False
@@ -126,8 +99,7 @@ class BandwidthMonitor:
             # Enable network domain via CDP
             await page.send(cdp.network.enable())
             
-            # Add handlers using nodriver's CDP event types
-            # These are typed event classes, not string names
+
             page.add_handler(
                 cdp.network.RequestWillBeSent,
                 self._on_request_will_be_sent
@@ -177,11 +149,7 @@ class BandwidthMonitor:
         """Set category for subsequent requests (login, polling, etc.)"""
         self._current_category = category
         logger.debug(f"Request category set to: {category}")
-    
-    # =========================================================
-    # CDP Event Handlers (async functions for nodriver)
-    # =========================================================
-    
+
     async def _on_request_will_be_sent(self, event: 'cdp.network.RequestWillBeSent'):
         """Handle outgoing request"""
         if not self.current_session:
@@ -280,9 +248,6 @@ class BandwidthMonitor:
         except Exception as e:
             logger.debug(f"Error in loading failed handler: {e}")
     
-    # =========================================================
-    # Reporting Methods
-    # =========================================================
     
     def _save_session(self, session: SessionStats):
         """Append session to log file"""
@@ -382,10 +347,6 @@ class BandwidthMonitor:
 # Global instance for easy access
 bandwidth_monitor = BandwidthMonitor()
 
-
-# ============================================================
-# Quick test
-# ============================================================
 
 if __name__ == "__main__":
     print("Bandwidth Monitor Module (nodriver compatible)")

@@ -3,12 +3,15 @@ FROM python:3.10-slim
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:99 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    HEADLESS=True \
+    DOCKER=1
 
-# Install Chromium (lighter than Chrome)
+# Install Chromium and Xvfb (virtual display fallback)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     chromium \
     chromium-driver \
+    xvfb \
     # Required libraries
     fonts-liberation \
     libasound2 \
@@ -51,4 +54,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)" || exit 1
 
-CMD ["python", "web_server.py"]
+# Start Xvfb (virtual display) as fallback, then run the app
+CMD Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp &>/dev/null & sleep 1 && python web_server.py

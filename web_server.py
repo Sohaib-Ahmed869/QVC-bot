@@ -1,4 +1,3 @@
- 
 import asyncio
 import json
 import uuid
@@ -47,10 +46,6 @@ if not root_logger.handlers:
 # Get module logger (inherits from root, no extra handlers needed)
 logger = logging.getLogger(__name__)
 
-
-# ============================================
-# Pydantic Models
-# ============================================
 
 class ApplicantCreate(BaseModel):
     passport_number: str = Field(..., min_length=5, max_length=15)
@@ -107,10 +102,6 @@ class BotStatus(BaseModel):
     slot_found: bool = False
     slot_details: Optional[dict] = None
 
-
-# ============================================
-# Data Storage
-# ============================================
 
 DATA_FILE = Path(__file__).parent / "applicants.json"
 
@@ -416,7 +407,7 @@ class ParallelBotRunner:
                 # Check results
                 if self._slot_found:
                     session.status = "slot_found"
-                    self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    self.add_log(f" Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
                     return
                 elif success:
                     session.status = "slot_found"
@@ -426,7 +417,7 @@ class ParallelBotRunner:
                         "session_id": session_id,
                         "found_at": datetime.now().isoformat()
                     }
-                    self.add_log(f"✅ Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    self.add_log(f" Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
                     return
                 else:
                     # No slot found - continue with next rotation

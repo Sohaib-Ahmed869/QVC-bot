@@ -8,15 +8,83 @@ import tempfile
 from datetime import date, datetime
 from typing import Optional, Tuple
 import logging
-
 import nodriver as uc
-
+from nodriver import cdp
 from config import config, selectors, Applicant
 from captcha_solver import CaptchaSolver
 from bandwidth_monitor import bandwidth_monitor
 from proxy_manager import ProxyManager, ProxyConfig
 
 logger = logging.getLogger(__name__)
+
+import platform
+import shutil as _shutil
+
+def _find_chrome() -> Optional[str]:
+    """Auto-detect Chrome/Chromium executable across platforms.
+    
+    Priority:
+      1. CHROME_PATH env var (explicit override)
+      2. shutil.which() lookup (works if chrome/chromium is on PATH)
+      3. Platform-specific common install locations
+    Returns None if nothing found (lets nodriver try its own detection).
+    """
+    # 1. Env override — works everywhere (local, Docker, AWS, etc.)
+    env_path = os.environ.get('CHROME_PATH') or os.environ.get('CHROMIUM_PATH')
+    if env_path and os.path.isfile(env_path):
+        logger.info(f"Chrome from env: {env_path}")
+        return env_path
+
+    # 2. PATH lookup — covers snap/apt/brew installs and custom setups
+    for name in ('google-chrome', 'google-chrome-stable', 'chromium-browser',
+                 'chromium', 'chrome', 'chrome.exe'):
+        found = _shutil.which(name)
+        if found:
+            logger.info(f"Chrome from PATH: {found}")
+            return found
+
+    # 3. Well-known locations per OS
+    system = platform.system()
+    candidates: list[str] = []
+
+    if system == 'Windows':
+        candidates = [
+            os.path.expandvars(r'%ProgramFiles%\Google\Chrome\Application\chrome.exe'),
+            os.path.expandvars(r'%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe'),
+            os.path.expandvars(r'%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe'),
+        ]
+    elif system == 'Darwin':  # macOS
+        candidates = [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+        ]
+    else:  # Linux (Ubuntu, Amazon Linux, Alpine, Docker, etc.)
+        candidates = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/snap/bin/chromium',
+            '/opt/google/chrome/chrome',        # official .deb/.rpm
+            '/opt/google/chrome/google-chrome',
+            '/opt/chromium/chrome',               # some Docker images
+            '/usr/lib/chromium/chromium',          # Alpine
+        ]
+
+    for p in candidates:
+        if os.path.isfile(p):
+            logger.info(f"Chrome at known path: {p}")
+            return p
+
+    logger.warning("Chrome/Chromium not found — letting nodriver auto-detect")
+    return None  # nodriver will attempt its own lookup
+
+
+def _temp_user_data_dir() -> str:
+    """Return a unique temp directory for Chrome user data, OS-aware."""
+    base = tempfile.gettempdir()  # cross-platform: %TEMP% on Win, /tmp on Linux
+    return os.path.join(base, f'chrome_uc_{uuid.uuid4().hex[:8]}')
+
 
 # Create debug directory for HTML snapshots
 DEBUG_HTML_DIR = os.path.join(os.path.dirname(__file__), "debug_html")
@@ -34,10 +102,7 @@ class BrowserEngine:
         self._session_id = datetime.now().strftime("%Y%m%d_%H%M%S")  # For logging
     
     async def _log_html_snapshot(self, event_name: str, selector: str = None):
-        """
-        Capture and log HTML snapshot for debugging.
-        Saves to debug_html/ directory with timestamp.
-        """
+
         if not self.page:
             return
         
@@ -132,15 +197,67 @@ console.log('Proxy auth extension loaded');
             logger.error(f"Failed to create proxy auth extension: {e}")
             return None
     
+    async def _setup_cdp_proxy_auth(self):
+        """
+        Set up CDP Fetch-based proxy authentication.
+        
+        This is more reliable than extension-based auth in headless mode because
+        Manifest V3 service workers can be flaky in --headless=new Chromium.
+        Works at the DevTools protocol level regardless of headless/headed mode.
+        """
+        try:
+            tab = self.browser.main_tab
+            if not tab:
+                logger.warning("No main tab available for CDP proxy auth setup")
+                return
+            
+            username = self._current_proxy.session_username
+            password = self._current_proxy.password
+            
+            # Enable Fetch domain with auth interception only
+            # (does NOT pause regular requests — only intercepts 407 auth challenges)
+            await tab.send(cdp.fetch.enable(handle_auth_requests=True))
+            
+            # Handler for proxy 407 auth challenges
+            def _handle_proxy_auth(event: cdp.fetch.AuthRequired, connection):
+                """Respond to proxy auth challenge with credentials"""
+                try:
+                    asyncio.ensure_future(
+                        connection.send(cdp.fetch.continue_with_auth(
+                            request_id=event.request_id,
+                            auth_challenge_response=cdp.fetch.AuthChallengeResponse(
+                                response="ProvideCredentials",
+                                username=username,
+                                password=password
+                            )
+                        ))
+                    )
+                except Exception as e:
+                    logger.warning(f"Proxy auth handler error: {e}")
+            
+            tab.add_handler(cdp.fetch.AuthRequired, _handle_proxy_auth)
+            logger.info("CDP proxy auth handler configured")
+            
+        except Exception as e:
+            logger.warning(f"CDP proxy auth setup failed: {e} — falling back to extension")
+            # If CDP fails, try loading the extension as fallback
+            if not self._proxy_ext_dir:
+                self._proxy_ext_dir = self._create_proxy_auth_extension()
+            if self._proxy_ext_dir:
+                logger.info("Loading proxy auth extension as fallback...")
+    
     async def start(self):
         """Initialize browser with Docker/production-ready settings"""
         logger.info("Starting browser...")
         
-        # Minimal Chrome arguments for Windows - prioritize stability
+        # Chrome arguments — only include args NOT already in nodriver defaults.
+        # nodriver defaults already include: --remote-allow-origins=*, --no-first-run,
+        # --no-service-autorun, --no-default-browser-check, --homepage=about:blank,
+        # --no-pings, --password-store=basic, --disable-infobars, --disable-breakpad,
+        # --disable-dev-shm-usage, --disable-session-crashed-bubble,
+        # --disable-search-engine-choice-screen
         browser_args = [
-            "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-dev-shm-usage",
             # Display
             "--window-size=1920,1080",
             "--start-maximized",
@@ -149,14 +266,17 @@ console.log('Proxy auth extension loaded');
             "--disable-blink-features=AutomationControlled",
             
             # Speed optimizations
-            "--disable-extensions",
             "--disable-default-apps",
             "--disable-sync",
             "--disable-translate",
             "--mute-audio",
-            "--no-first-run",
-            "--no-default-browser-check",
         ]
+        
+        # Detect Docker/Linux environment for headless forcing
+        is_docker = os.path.exists('/.dockerenv') or os.environ.get('DOCKER', '') == '1'
+        headless = config.HEADLESS or is_docker
+        if is_docker and not config.HEADLESS:
+            logger.warning("Docker detected but HEADLESS=False — forcing headless mode")
         
         # Configure proxy if enabled
         if self.proxy_manager:
@@ -166,35 +286,47 @@ console.log('Proxy auth extension loaded');
             proxy_server = f"http://{self._current_proxy.host}:{self._current_proxy.port}"
             browser_args.append(f"--proxy-server={proxy_server}")
             
-            # Create and load auth extension
-            self._proxy_ext_dir = self._create_proxy_auth_extension()
-            if self._proxy_ext_dir:
-                browser_args.append(f"--load-extension={self._proxy_ext_dir}")
-                browser_args.append(f"--disable-extensions-except={self._proxy_ext_dir}")
-            
             logger.info(f"Proxy configured: {self._current_proxy.host}:{self._current_proxy.port}")
             logger.info(f"Session ID: {self._current_proxy.session_id}")
         
         try:
+            _chrome_path = _find_chrome()
+            _user_data_dir = _temp_user_data_dir()
+
+            # Build nodriver Config object for proper parameter handling
+            browser_config = uc.Config(
+                headless=headless,
+                browser_executable_path=_chrome_path,
+                browser_args=browser_args,
+                sandbox=False,  # Required for Docker (--no-sandbox)
+                user_data_dir=_user_data_dir
+            )
+            
             # Start browser with retries
             max_start_retries = 3
             for attempt in range(max_start_retries):
                 try:
-                    self.browser = await uc.start(
-                        headless=config.HEADLESS,
-                        browser_args=browser_args,
-                        no_sandbox=True,
-                        browser_executable_path='/usr/bin/chromium',  # ← Add this
-                        user_data_dir=f"/tmp/chrome/uc_{uuid.uuid4().hex[:8]}"
-                    )
+                    self.browser = await uc.start(config=browser_config)
                     logger.info(f"Browser process started (attempt {attempt + 1})")
                     break
                 except Exception as e:
                     logger.warning(f"Browser start attempt {attempt + 1} failed: {e}")
                     if attempt < max_start_retries - 1:
+                        # Create fresh config with new user data dir for retry
+                        browser_config = uc.Config(
+                            headless=headless,
+                            browser_executable_path=_chrome_path,
+                            browser_args=browser_args,
+                            sandbox=False,
+                            user_data_dir=_temp_user_data_dir()
+                        )
                         await asyncio.sleep(2)
                     else:
                         raise
+            
+            # Set up CDP-based proxy auth (reliable in headless, no extension needed)
+            if self.proxy_manager and self._current_proxy:
+                await self._setup_cdp_proxy_auth()
             
             # Navigate to page with retries
             logger.info(f"Navigating to {config.BASE_URL}...")
@@ -328,10 +460,7 @@ console.log('Proxy auth extension loaded');
             return False
     
     async def _handle_request_error(self, error: Exception) -> bool:
-        """
-        Analyze error and trigger rotation if needed.
-        Returns True if rotation happened and retry should occur.
-        """
+
         if not self.proxy_manager:
             return False
         
@@ -537,10 +666,6 @@ console.log('Proxy auth extension loaded');
             logger.error(f"Landing page navigation failed: {e}")
             return False
     
-    # ========================================
-    # CAPTCHA Handling
-    # ========================================
-    
     async def _get_captcha_image(self) -> Optional[str]:
         """Extract CAPTCHA image as base64"""
         try:
@@ -625,7 +750,7 @@ console.log('Proxy auth extension loaded');
         except:
             pass
         
-        # Check for applicant details component
+        
         try:
             await self.page.wait_for("qvc-applicantdetails", timeout=1)
             return True

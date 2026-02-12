@@ -30,7 +30,10 @@ class Config:
     POLL_INTERVAL: float = 4.0  # Seconds between slot checks
     
 
-    HEADLESS: bool = False  
+    HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
+    
+    # Chrome/Chromium path override (auto-detected if empty)
+    CHROME_PATH: str = os.getenv("CHROME_PATH", "")
     
     # Proxy settings (Data Impulse) - Loaded from .env
     PROXY_ENABLED: bool = os.getenv("PROXY_ENABLED", "False").lower() == "true"

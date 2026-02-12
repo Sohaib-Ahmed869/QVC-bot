@@ -49,7 +49,7 @@ class VisaBot:
         }
     
     async def initialize(self):
-        """Initialize all components"""
+        
         logger.info("=" * 60)
         logger.info("Qatar Visa Appointment Bot")
         logger.info("=" * 60)

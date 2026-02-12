@@ -738,28 +738,21 @@ class SlotHunter:
                         return result
                         
                     else:
-                        # No slots in this month
-                        pass
+                        # No slots in this month — navigate to next
+                        months_scanned += 1
+                        if month_idx < self.max_months - 1:
+                            if not await self._go_to_next_month():
+                                break  # No more months in calendar, break FOR loop
+                            await asyncio.sleep(0.5)
 
-                # If we scanned all months and found nothing
-                if months_scanned >= self.max_months and available_count == 0:
-                    self._consecutive_empty_polls += 1
-                    
-                    # If we've seen empty results for too long, might be IP-specific blocking
-                    # Rotate every ~50 empty polls (100 seconds at 2s interval)
-                    if self._consecutive_empty_polls >= 50 and self.proxy_manager:
-                        logger.warning("Extended empty results - raising soft block error")
-                        raise Exception("Soft blocked suspected")
-            
-                # Update months scanned counter
-                months_scanned += 1
+                # All months scanned this poll — no slots found
+                self._consecutive_empty_polls += 1
                 
-                # Go to next month
-                if not await self._go_to_next_month():
-                    break
-                await asyncio.sleep(1)
+                # If we've seen empty results for too long, might be IP-specific blocking
+                if self._consecutive_empty_polls >= 50 and self.proxy_manager:
+                    logger.warning("Extended empty results - raising soft block error")
+                    raise Exception("Soft blocked suspected")
             
-                # If we get here, no slots found in any month this poll
                 if self.poll_count <= 5 or self.poll_count % 30 == 0:
                     logger.debug(f"No slots in {months_scanned} months. Waiting {self.poll_interval}s...")
             
