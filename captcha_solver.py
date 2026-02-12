@@ -84,16 +84,22 @@ class CaptchaSolver:
             if data.get("errorId", 0) != 0:
                 logger.error(f"CapSolver error: {data.get('errorDescription')}")
                 return None
-            
+
+            # ImageToTextTask returns solution immediately in createTask response
+            solution = data.get("solution", {})
+            if solution and solution.get("text"):
+                text = solution["text"]
+                logger.info(f"CapSolver result (instant): {text}")
+                return text
+
+            # Fallback: poll if no instant result
             task_id = data.get("taskId")
             if not task_id:
-                # Some tasks return result immediately
-                solution = data.get("solution", {})
-                return solution.get("text")
-            
-            # Poll for result
-            for _ in range(30):  
-                await asyncio.sleep(1)
+                logger.error("CapSolver: no solution and no taskId")
+                return None
+
+            for _ in range(30):
+                await asyncio.sleep(2)
                 result_response = await client.post(
                     "https://api.capsolver.com/getTaskResult",
                     json={
@@ -102,16 +108,16 @@ class CaptchaSolver:
                     }
                 )
                 result_data = result_response.json()
-                
+
                 if result_data.get("status") == "ready":
                     text = result_data.get("solution", {}).get("text")
                     logger.info(f"CapSolver result: {text}")
                     return text
-                
+
                 if result_data.get("errorId", 0) != 0:
                     logger.error(f"CapSolver task error: {result_data}")
                     return None
-            
+
             logger.error("CapSolver timeout")
             return None
                 
