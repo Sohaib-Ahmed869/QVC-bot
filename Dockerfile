@@ -4,7 +4,7 @@ ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:99 \
     PYTHONDONTWRITEBYTECODE=1 \
-    HEADLESS=True \
+    HEADLESS=False \
     DOCKER=1
 
 # Install Chromium and Xvfb (virtual display fallback)

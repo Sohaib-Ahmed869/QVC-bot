@@ -288,11 +288,11 @@ console.log('Proxy auth extension loaded');
             "--mute-audio",
         ]
         
-        # Detect Docker/Linux environment for headless forcing
+        # Use configured headless setting (Xvfb provides virtual display in Docker)
         is_docker = os.path.exists('/.dockerenv') or os.environ.get('DOCKER', '') == '1'
-        headless = config.HEADLESS or is_docker
-        if is_docker and not config.HEADLESS:
-            logger.warning("Docker detected but HEADLESS=False — forcing headless mode")
+        headless = config.HEADLESS
+        if is_docker and not headless:
+            logger.info("Docker detected — using Xvfb virtual display (headed mode)")
         
         # Configure proxy if enabled
         if self.proxy_manager:
@@ -362,20 +362,24 @@ console.log('Proxy auth extension loaded');
                     try:
                         title = await self.page.evaluate("document.title")
                         url = self.page.url
-                        
+
                         logger.info(f"Page loaded - URL: {url}")
                         logger.info(f"Page title: {title}")
-                        
-                        # Check for connection errors
-                        if not title or "ERR_" in str(title).upper() or len(str(title)) == 0:
-                            raise ConnectionError(f"Page load failed - invalid title: {title}")
-                        
-                        # Check if we got a real page
+
+                        # Check for Chrome network error pages (ERR_PROXY_CONNECTION_FAILED, etc.)
+                        if title and "ERR_" in str(title).upper():
+                            raise ConnectionError(f"Page load failed - error title: {title}")
+
+                        # Check if we got a real page (URL is the reliable indicator)
                         if "qatarvisacenter" not in str(url).lower() and attempt < max_nav_retries - 1:
                             logger.warning(f"Unexpected URL: {url}, retrying...")
                             await asyncio.sleep(2)
                             continue
-                        
+
+                        # URL is correct — page loaded (empty title is fine, JS may set it later)
+                        if not title:
+                            logger.info("Title is empty (JS may still be loading) — URL is valid, continuing")
+
                         break  # Success
                         
                     except Exception as e:
@@ -411,14 +415,14 @@ console.log('Proxy auth extension loaded');
             url = self.page.url
             logger.info(f"Navigated to: {url} | Title: {title}")
             
-            # Check for navigation errors
-            if "ERR_" in str(title) or "available" in str(title).lower() or not title:
+            # Check for navigation errors (only Chrome error pages, not empty titles)
+            if title and ("ERR_" in str(title) or "available" in str(title).lower()):
                 error_msg = f"Navigation failed - Page title: {title}"
                 logger.error(error_msg)
-                
+
                 if self.proxy_manager:
                     await self.proxy_manager.report_failure("connection")
-                
+
                 raise ConnectionError(f"Failed to load {config.BASE_URL}")
             
             logger.info("Browser started successfully")
