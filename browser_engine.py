@@ -224,6 +224,8 @@ console.log('Proxy auth extension loaded');
             def _handle_request_paused(event: cdp.fetch.RequestPaused, connection):
                 """Let normal requests through without modification"""
                 try:
+                    req_url = event.request.url if event.request else "unknown"
+                    logger.debug(f"[CDP] RequestPaused: {req_url[:80]}")
                     asyncio.ensure_future(
                         connection.send(cdp.fetch.continue_request(
                             request_id=event.request_id
@@ -238,6 +240,7 @@ console.log('Proxy auth extension loaded');
             def _handle_proxy_auth(event: cdp.fetch.AuthRequired, connection):
                 """Respond to proxy auth challenge with credentials"""
                 try:
+                    logger.info(f"[CDP] AuthRequired triggered — sending credentials (user: {username})")
                     asyncio.ensure_future(
                         connection.send(cdp.fetch.continue_with_auth(
                             request_id=event.request_id,
@@ -252,7 +255,7 @@ console.log('Proxy auth extension loaded');
                     logger.warning(f"Proxy auth handler error: {e}")
 
             tab.add_handler(cdp.fetch.AuthRequired, _handle_proxy_auth)
-            logger.info("CDP proxy auth handler configured")
+            logger.info(f"CDP proxy auth handler configured (user: {username})")
             
         except Exception as e:
             logger.warning(f"CDP proxy auth setup failed: {e} — falling back to extension")
@@ -355,16 +358,20 @@ console.log('Proxy auth extension loaded');
                         timeout=30
                     )
 
-                    # Reduced wait time for faster loading
-                    await asyncio.sleep(2)
-                    
+                    # Wait for page to render (headless + proxy can be slower)
+                    await asyncio.sleep(5)
+
                     # Verify page loaded
                     try:
                         title = await self.page.evaluate("document.title")
                         url = self.page.url
-
+                        # Debug: log what the proxy actually returned
+                        body_text = await self.page.evaluate(
+                            "document.body ? document.body.innerText.substring(0, 500) : 'NO BODY'"
+                        )
                         logger.info(f"Page loaded - URL: {url}")
-                        logger.info(f"Page title: {title}")
+                        logger.info(f"Page title: '{title}'")
+                        logger.info(f"Page body preview: {body_text[:200]}")
 
                         # Check for Chrome network error pages (ERR_PROXY_CONNECTION_FAILED, etc.)
                         if title and "ERR_" in str(title).upper():
