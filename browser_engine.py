@@ -9,7 +9,7 @@ from datetime import date, datetime
 from typing import Optional, Tuple
 import logging
 import nodriver as uc
-from nodriver import cdp
+from   nodriver import cdp
 from config import config, selectors, Applicant
 from captcha_solver import CaptchaSolver
 from bandwidth_monitor import bandwidth_monitor
@@ -21,15 +21,7 @@ import platform
 import shutil as _shutil
 
 def _find_chrome() -> Optional[str]:
-    """Auto-detect Chrome/Chromium executable across platforms.
-    
-    Priority:
-      1. CHROME_PATH env var (explicit override)
-      2. shutil.which() lookup (works if chrome/chromium is on PATH)
-      3. Platform-specific common install locations
-    Returns None if nothing found (lets nodriver try its own detection).
-    """
-    # 1. Env override — works everywhere (local, Docker, AWS, etc.)
+
     env_path = os.environ.get('CHROME_PATH') or os.environ.get('CHROMIUM_PATH')
     if env_path and os.path.isfile(env_path):
         logger.info(f"Chrome from env: {env_path}")
@@ -198,13 +190,7 @@ console.log('Proxy auth extension loaded');
             return None
     
     async def _setup_cdp_proxy_auth(self):
-        """
-        Set up CDP Fetch-based proxy authentication.
-        
-        This is more reliable than extension-based auth in headless mode because
-        Manifest V3 service workers can be flaky in --headless=new Chromium.
-        Works at the DevTools protocol level regardless of headless/headed mode.
-        """
+
         try:
             tab = self.browser.main_tab
             if not tab:
@@ -268,13 +254,7 @@ console.log('Proxy auth extension loaded');
     async def start(self):
         """Initialize browser with Docker/production-ready settings"""
         logger.info("Starting browser...")
-        
-        # Chrome arguments — only include args NOT already in nodriver defaults.
-        # nodriver defaults already include: --remote-allow-origins=*, --no-first-run,
-        # --no-service-autorun, --no-default-browser-check, --homepage=about:blank,
-        # --no-pings, --password-store=basic, --disable-infobars, --disable-breakpad,
-        # --disable-dev-shm-usage, --disable-session-crashed-bubble,
-        # --disable-search-engine-choice-screen
+     
         browser_args = [
             "--disable-setuid-sandbox",
             # Display

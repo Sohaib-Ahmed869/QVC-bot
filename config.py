@@ -4,7 +4,6 @@ from datetime import date
 from typing import Optional
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 @dataclass
@@ -13,25 +12,18 @@ class Config:
     BASE_URL: str = "https://www.qatarvisacenter.com"
     SCHEDULE_URL: str = "https://www.qatarvisacenter.com/schedule"
     
-    # Date range for slot booking (MODIFY THESE)
     DATE_RANGE_START: date = field(default_factory=lambda: date(2025, 2, 1))
     DATE_RANGE_END: date = field(default_factory=lambda: date(2025, 3, 31))
-    
     # File pathsc
     EXCEL_PATH: str = "applicants.xlsx"
-    
     # CapSolver API (fallback) - Loaded from .env
     CAPSOLVER_API_KEY: str = os.getenv("CAPSOLVER_API_KEY", "")
-               
     # Timing settings
     CAPTCHA_MAX_RETRIES: int = 3
     PAGE_LOAD_TIMEOUT: int = 30
     ELEMENT_WAIT_TIMEOUT: int = 10
-    POLL_INTERVAL: float = 4.0  # Seconds between slot checks
-    
-
+    POLL_INTERVAL: float = 4.0  # Seconds between slot checks    
     HEADLESS: bool = os.getenv("HEADLESS", "True").lower() == "true"
-    
     # Chrome/Chromium path override (auto-detected if empty)
     CHROME_PATH: str = os.getenv("CHROME_PATH", "")
     
@@ -44,13 +36,20 @@ class Config:
     PROXY_STICKY_MINS: int = int(os.getenv("PROXY_STICKY_MINS", "10"))
     PROXY_MAX_ROTATIONS: int = int(os.getenv("PROXY_MAX_ROTATIONS", "30"))
     
-    # Session rotation settings (to avoid IP blocking)
+ 
     SESSION_DURATION_MINUTES: int = 5      # How long each browser session runs before rotating
     SESSION_GAP_SECONDS: int = 4          # Delay between closing and starting new session
     
     # Logging
     LOG_FILE: str = "visa_bot.log"
     DEBUG: bool = False
+
+    # S3 Logging
+    S3_LOGGING_ENABLED: bool = os.getenv("S3_LOGGING_ENABLED", "False").lower() == "true"
+    S3_BUCKET_NAME: str = os.getenv("S3_BUCKET_NAME", "")
+    S3_REGION: str = os.getenv("S3_REGION", "us-east-1")
+    AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
+    AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
 
 @dataclass
@@ -131,8 +130,7 @@ class Selectors:
     NOTIFICATION_POPUP_CLOSE_BTN = "#notificationAlert > div > div > div > div.modal-header > button"
     NOTIFICATION_POPUP_CLOSE_BTN_XPATH = "/html/body/qvc-root/div[2]/qvc-schedule/div/div/div[2]/qvc-applicantdetails/modal[2]/div/div/div/div[1]/button"
 
-    
-    # ============ CALENDAR PAGE ============
+
     CALENDAR_CONTAINER = ".calendar, .datepicker, [class*='calendar']"
     AVAILABLE_DATE = ".available, .open, [class*='available']:not(.disabled)"
     NEXT_MONTH_BTN = ".next, .next-month, [class*='next']"

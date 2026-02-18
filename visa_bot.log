@@ -75,3 +75,13 @@ arguments:
 2026-02-12 18:04:34,799 | INFO     | web_server | [Bot] All sessions completed - no slots found
 2026-02-12 18:04:34,799 | INFO     | web_server | [Bot] ==================================================
 2026-02-12 18:04:34,800 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped
+2026-02-17 14:06:59,802 | WARNING  | __main__ | Failed to initialize S3Logger: Invalid endpoint: https://s3..amazonaws.com
+2026-02-17 14:06:59,804 | INFO     | __main__ | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-02-17 14:07:00,186 | WARNING  | web_server | Failed to initialize S3Logger: Invalid endpoint: https://s3..amazonaws.com
+2026-02-17 14:07:00,186 | INFO     | web_server | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-02-17 14:07:00,209 | INFO     | web_server | Scheduler started
+2026-02-17 14:07:00,210 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-17 14:07:06,873 | INFO     | web_server | Shutting down - cleaning up...
+2026-02-17 14:07:06,873 | INFO     | web_server | Force stop initiated for all sessions
+2026-02-17 14:07:06,873 | INFO     | web_server | [Bot] All sessions force stopped
+2026-02-17 14:07:06,873 | INFO     | web_server | Shutdown complete

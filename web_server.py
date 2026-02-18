@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -18,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 import uvicorn
 from config import config
+from s3_logger import S3Logger
 
 # Configure logging - write to both console and file
 log_format = logging.Formatter('%(asctime)s | %(levelname)-8s | %(name)s | %(message)s')
@@ -151,10 +151,6 @@ def save_data(data: dict):
             logger.error(f"Fallback save also failed: {e2}")
 
 
-# ============================================
-# Session Data Class
-# ============================================
-
 @dataclass
 class ParallelSession:
     """Represents a single browser session running for one applicant"""
@@ -182,17 +178,9 @@ class ParallelSession:
         }
 
 
-# ============================================
-# Parallel Bot Runner
-# ============================================
-
 from proxy_manager import ProxyManager
 
 class ParallelBotRunner:
-    """
-    Manages parallel bot execution for multiple applicants.
-    Each applicant runs in its own browser with its own proxy IP.
-    """
     
     MAX_PARALLEL_LIMIT = None  # No hard limit — user decides
     
@@ -206,6 +194,14 @@ class ParallelBotRunner:
         self._lock = asyncio.Lock()
         self._log_cursor = 0
         self._proxy_managers: Dict[str, ProxyManager] = {}  # session_id -> ProxyManager
+        self._session_logs: Dict[str, List[dict]] = {}  # session_id -> per-session log buffer
+        self._s3_logger: Optional[S3Logger] = None
+        if config.S3_LOGGING_ENABLED:
+            try:
+                self._s3_logger = S3Logger()
+                logger.info("S3 session logging enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize S3Logger: {e}")
         
     def add_log(self, message: str, log_type: str = "", session_id: str = None, passport: str = None):
         """Add log entry with timestamp and optional session context"""
@@ -215,12 +211,15 @@ class ParallelBotRunner:
         elif session_id and session_id in self.sessions:
             prefix = f"[{self.sessions[session_id].passport_number}] "
         
-        self.logs.append({
+        entry = {
             "time": datetime.now().strftime("%H:%M:%S"),
             "message": f"{prefix}{message}",
             "type": log_type,
             "session_id": session_id
-        })
+        }
+        self.logs.append(entry)
+        if session_id:
+            self._session_logs.setdefault(session_id, []).append(entry)
         # Keep only last 500 logs (enough for 10 parallel sessions)
         if len(self.logs) > 500:
             trim_count = len(self.logs) - 500
@@ -235,6 +234,18 @@ class ParallelBotRunner:
         new_logs = self.logs[cursor:]
         return new_logs, len(self.logs)
     
+    async def _upload_session_logs(self, session_id: str, passport: str):
+        """Upload buffered session logs to S3 and clean up the buffer."""
+        if not self._s3_logger:
+            return
+        logs = self._session_logs.pop(session_id, [])
+        if not logs:
+            return
+        try:
+            await self._s3_logger.upload_session_logs(passport, session_id, logs)
+        except Exception as e:
+            logger.warning(f"Failed to upload session logs for {passport}: {e}")
+
     def _create_proxy_manager(self, session_id: str) -> Optional[ProxyManager]:
         """Create a dedicated proxy manager for a session"""
         if not config.PROXY_ENABLED:
@@ -320,11 +331,7 @@ class ParallelBotRunner:
         center: str,
         proxy_manager: Optional[ProxyManager]
     ):
-        """
-        Run a single browser session for one applicant.
-        This is the worker function that runs in parallel.
-        Automatically restarts with new IP after session duration (5 min).
-        """
+
         from browser_engine import BrowserEngine
         from config import Applicant as ConfigApplicant
         
@@ -378,6 +385,7 @@ class ParallelBotRunner:
                     self.add_log("Stop requested, closing session", session_id=session_id, passport=passport)
                     await browser.close()
                     session.status = "stopped"
+                    await self._upload_session_logs(session_id, passport)
                     return
                 
                 # Calculate session duration (5 min default, or remaining schedule time)
@@ -408,6 +416,7 @@ class ParallelBotRunner:
                 if self._slot_found:
                     session.status = "slot_found"
                     self.add_log(f" Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    await self._upload_session_logs(session_id, passport)
                     return
                 elif success:
                     session.status = "slot_found"
@@ -418,6 +427,7 @@ class ParallelBotRunner:
                         "found_at": datetime.now().isoformat()
                     }
                     self.add_log(f" Session completed - SLOT FOUND!", "success", session_id=session_id, passport=passport)
+                    await self._upload_session_logs(session_id, passport)
                     return
                 else:
                     # No slot found - continue with next rotation
@@ -436,6 +446,7 @@ class ParallelBotRunner:
                     except:
                         pass
                 session.browser = None
+                await self._upload_session_logs(session_id, passport)
                 return
                     
             except Exception as e:
@@ -457,16 +468,10 @@ class ParallelBotRunner:
         # Exhausted all rotations
         session.status = "completed"
         self.add_log(f"Session completed after {rotation_count} rotations - no slots found", session_id=session_id, passport=passport)
+        await self._upload_session_logs(session_id, passport)
     
     async def run(self, applicant_ids: List[str], center: str = "Islamabad", max_parallel: int = 2):
-        """
-        Run the bot for selected applicants in parallel.
-        
-        Args:
-            applicant_ids: List of applicant IDs to process
-            center: Visa center name
-            max_parallel: Maximum number of parallel sessions (1-4)
-        """
+    
         async with self._lock:
             if self.running:
                 return
@@ -668,11 +673,6 @@ class ParallelBotRunner:
 # Global bot runner instance (now parallel)
 bot_runner = ParallelBotRunner()
 
-
-# ============================================
-# Scheduler (Updated for parallel)
-# ============================================
-
 async def check_schedule():
     """Background task to check if bot should auto-run"""
     DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -740,10 +740,6 @@ async def check_schedule():
         await asyncio.sleep(60)
 
 
-# ============================================
-# FastAPI App
-# ============================================
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """App lifespan manager"""
@@ -783,10 +779,6 @@ if web_dir.exists():
 else:
     logger.warning(f"Static files directory not found: {web_dir}")
 
-
-# ============================================
-# API Routes
-# ============================================
 
 @app.get("/")
 async def root():
@@ -1035,11 +1027,6 @@ async def stop_bot():
     await bot_runner.force_stop()
     logger.info("Bot stopped by user")
     return {"message": "All sessions force stopped"}
-
-
-# ============================================
-# Entry Point
-# ============================================
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))

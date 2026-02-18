@@ -8,8 +8,6 @@ from config import config, Applicant
 from data_handler import DataHandler, create_template
 from browser_engine import BrowserEngine
 from bandwidth_monitor import bandwidth_monitor
-
-# Configure logging
 logging.basicConfig(
     level=logging.DEBUG if config.DEBUG else logging.INFO,
     format='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
@@ -19,17 +17,15 @@ logging.basicConfig(
     ]
 )
 
-# Silence noisy libraries
 for lib in ["websockets", "asyncio", "nodriver", "urllib3", "uc"]:
     logging.getLogger(lib).setLevel(logging.WARNING)
 
 logger = logging.getLogger("main")
 
-
 class VisaBot:
     def __init__(
         self,
-        excel_path: str,
+        excel_path: str, 
         start_date: date,
         end_date: date,
         headless: bool = False

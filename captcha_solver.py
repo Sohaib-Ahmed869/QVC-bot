@@ -37,10 +37,7 @@ class CaptchaSolver:
             self.ocr = None
     
     def solve_local(self, image_bytes: bytes) -> Optional[str]:
-        """
-        Solve CAPTCHA using local OCR
-        Returns: Captcha text or None if failed
-        """
+
         if not self.ocr:
             logger.warning("Local OCR skipped: ddddocr not initialized")
             return None
@@ -56,10 +53,7 @@ class CaptchaSolver:
             return None
     
     async def solve_capsolver(self, image_base64: str) -> Optional[str]:
-        """
-        Solve CAPTCHA using CapSolver API
-        Task type: ImageToTextTask
-        """
+
         payload = {
             "clientKey": self.capsolver_api_key,
             "task": {

@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-# Import nodriver CDP types
 try:
     import nodriver as uc
     from nodriver import cdp
