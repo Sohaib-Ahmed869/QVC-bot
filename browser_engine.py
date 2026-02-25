@@ -671,8 +671,20 @@ console.log('Proxy auth extension loaded');
             
             await asyncio.sleep(2)
             
-            # Click Book Appointment if not auto-navigated
+            # Wait for Book Appointment button to appear
             if "schedule" not in self.page.url:
+                logger.info("Waiting for Book Appointment button...")
+                for _ in range(10):
+                    found = await self.page.evaluate("""
+                        Array.from(document.querySelectorAll("a")).some(
+                            a => a.textContent.trim().toLowerCase().includes('book')
+                        )
+                    """)
+                    if found:
+                        break
+                    logger.info("Book button not yet visible, waiting...")
+                    await asyncio.sleep(2)
+
                 logger.info("Clicking Book Appointment button via JS...")
                 await self.page.evaluate("""
                     const links = document.querySelectorAll("a");
@@ -682,7 +694,7 @@ console.log('Proxy auth extension loaded');
                         }
                     }
                 """)
-                await asyncio.sleep(3)
+                await asyncio.sleep(5)
                 logger.info(f"URL after book click: {self.page.url}")
             
             # Verify navigation
