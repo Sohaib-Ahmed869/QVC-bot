@@ -283,6 +283,8 @@ console.log('Proxy auth extension loaded');
             "--disable-popup-blocking",
             "--disable-prompt-on-repost",
             "--metrics-recording-only",
+            "--no-zygote",
+            "--single-process",
             "--js-flags=--max-old-space-size=128",
         ]
         
@@ -671,24 +673,17 @@ console.log('Proxy auth extension loaded');
             
             # Click Book Appointment if not auto-navigated
             if "schedule" not in self.page.url:
-                logger.info("Clicking Book Appointment button...")
-                if await self._click(selectors.BOOK_APPOINTMENT_BTN):
-                    await asyncio.sleep(2)
-                
-                # Try fallback buttons
-                if "schedule" not in self.page.url:
-                    proceed_btns = [
-                        "button.btn-submit",
-                        "button[type='submit']",
-                        "button:has-text('Continue')",
-                        "button:has-text('Proceed')",
-                        "button:has-text('Book')",
-                        ".btn-brand-arrow"
-                    ]
-                    for btn_sel in proceed_btns:
-                        if await self._click(btn_sel):
-                            await asyncio.sleep(2)
-                            break
+                logger.info("Clicking Book Appointment button via JS...")
+                await self.page.evaluate("""
+                    const links = document.querySelectorAll("a");
+                    for (const a of links) {
+                        if (a.textContent.trim().toLowerCase().includes('book')) {
+                            a.click(); break;
+                        }
+                    }
+                """)
+                await asyncio.sleep(3)
+                logger.info(f"URL after book click: {self.page.url}")
             
             # Verify navigation
             if "schedule" in self.page.url:
