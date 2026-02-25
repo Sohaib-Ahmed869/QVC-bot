@@ -235,7 +235,6 @@ chrome.webRequest.onAuthRequired.addListener(
         if platform.system() != "Windows":
             browser_args += [
                 "--no-zygote",
-                "--single-process",
             ]
 
         is_docker = os.path.exists('/.dockerenv') or os.environ.get('DOCKER', '') == '1'
