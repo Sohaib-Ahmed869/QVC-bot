@@ -66,13 +66,13 @@ class Applicant:
 class Selectors:
     # ============ LANDING PAGE (qatarvisacenter.com) ============
     # Language dropdown
-    LANGUAGE_DROPDOWN_TRIGGER = "(//div[contains(@class,'holder') and contains(@class,'dropdown-toggle')])[1]"
+    LANGUAGE_DROPDOWN_TRIGGER = "input[placeholder='-- Select Language --']"
     LANGUAGE_DROPDOWN_ARROW = "div.holder.dropdown-toggle"
     LANGUAGE_DROPDOWN_MENU = "ul.dropdown-menu.show"
     LANGUAGE_OPTION_ENGLISH = "ul.dropdown-menu.show li a"  
     
     # Country dropdown (appears after language selection)
-    COUNTRY_DROPDOWN_TRIGGER = "(//div[contains(@class,'holder') and contains(@class,'dropdown-toggle')])[2]"
+    COUNTRY_DROPDOWN_TRIGGER = "input[placeholder='-- Select Country --']"
     COUNTRY_DROPDOWN_ARROW = "div.dropdown input[placeholder='-- Select Country --'] + div.holder"
     COUNTRY_DROPDOWN_MENU = "ul.dropdown-menu"
     COUNTRY_OPTION = "ul.dropdown-menu li a"  # Select by text match

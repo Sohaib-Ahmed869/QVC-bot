@@ -582,10 +582,7 @@ console.log('Proxy auth extension loaded');
         try:
             logger.info(f"Selecting '{option_text}' from dropdown...")
             
-            if trigger_selector.startswith("//") or trigger_selector.startswith("(//"):
-                trigger = await self.page.find(trigger_selector, timeout=config.ELEMENT_WAIT_TIMEOUT)
-            else:
-                trigger = await self._wait_for(trigger_selector)
+            trigger = await self._wait_for(trigger_selector)
             if not trigger:
                 logger.error(f"Dropdown trigger not found: {trigger_selector}")
                 return False
