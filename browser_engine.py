@@ -542,6 +542,20 @@ chrome.webRequest.onAuthRequired.addListener(
             """)
             await asyncio.sleep(1)
 
+            # Close dropdown by clicking body, then wait for country dropdown
+            await self.page.evaluate("document.body.click()")
+            await asyncio.sleep(1)
+
+            # Wait for country dropdown to be ready
+            for _ in range(5):
+                country_ready = await self.page.evaluate(
+                    "document.querySelector(\"input[placeholder='-- Select Country --']\") !== null"
+                )
+                if country_ready:
+                    break
+                await asyncio.sleep(1)
+            await asyncio.sleep(1)
+
             lang_val = await self.page.evaluate("""
                 document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
             """)
