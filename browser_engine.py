@@ -631,26 +631,43 @@ console.log('Proxy auth extension loaded');
             # Load base URL
             await self.page.get(config.BASE_URL)
             await asyncio.sleep(2)
+
+            for _ in range(10):
+                el = await self.page.evaluate(
+                    "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
+                )
+                if el:
+                    break
+                logger.info("Waiting for page to render...")
+                await asyncio.sleep(2)
             
             # Select language
             logger.info("Selecting language...")
-            if not await self._select_dropdown_option(
-                selectors.LANGUAGE_DROPDOWN_TRIGGER,
-                language
-            ):
-                logger.error("Failed to select language")
-                return False
-            
+            await self.page.evaluate("""
+                document.querySelector("input[placeholder='-- Select Language --']").click()
+            """)
             await asyncio.sleep(1)
-            
+            await self.page.evaluate("""
+                const links = document.querySelectorAll("ul.dropdown-menu li a");
+                for (const a of links) {
+                    if (a.textContent.trim() === 'English') { a.click(); break; }
+                }
+            """)
+            await asyncio.sleep(1)
+
             # Select country
             logger.info(f"Selecting country: {country}")
-            if not await self._select_dropdown_option(
-                selectors.COUNTRY_DROPDOWN_TRIGGER,
-                country
-            ):
-                logger.error("Failed to select country")
-                return False
+            await self.page.evaluate("""
+                document.querySelector("input[placeholder='-- Select Country --']").click()
+            """)
+            await asyncio.sleep(1)
+            await self.page.evaluate("""
+                const links = document.querySelectorAll("ul.dropdown-menu li a");
+                for (const a of links) {
+                    if (a.textContent.trim() === 'Pakistan') { a.click(); break; }
+                }
+            """)
+            await asyncio.sleep(2)
             
             await asyncio.sleep(2)
             
