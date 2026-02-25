@@ -677,7 +677,7 @@ console.log('Proxy auth extension loaded');
                 for _ in range(10):
                     found = await self.page.evaluate("""
                         Array.from(document.querySelectorAll("a")).some(
-                            a => a.textContent.trim().toLowerCase().includes('book')
+                            a => a.textContent.trim().toLowerCase().includes('book appointment')
                         )
                     """)
                     if found:
