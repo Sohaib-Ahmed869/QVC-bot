@@ -283,8 +283,6 @@ console.log('Proxy auth extension loaded');
             "--disable-popup-blocking",
             "--disable-prompt-on-repost",
             "--metrics-recording-only",
-            "--no-zygote",
-            "--single-process",
             "--js-flags=--max-old-space-size=128",
         ]
         

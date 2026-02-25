@@ -85,3 +85,1441 @@ arguments:
 2026-02-17 14:07:06,873 | INFO     | web_server | Force stop initiated for all sessions
 2026-02-17 14:07:06,873 | INFO     | web_server | [Bot] All sessions force stopped
 2026-02-17 14:07:06,873 | INFO     | web_server | Shutdown complete
+2026-02-26 00:14:18,108 | INFO     | __main__ | S3 session logging enabled
+2026-02-26 00:14:18,109 | INFO     | __main__ | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:14:18,237 | INFO     | web_server | S3 session logging enabled
+2026-02-26 00:14:18,238 | INFO     | web_server | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:14:18,243 | INFO     | web_server | Scheduler started
+2026-02-26 00:14:18,244 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-26 00:15:20,029 | INFO     | web_server | Created applicant: WD6915151
+2026-02-26 00:15:22,902 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:15:22,902 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:15:22,903 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:15:22,903 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:15:22,903 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:15:22,903 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:15:22,903 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:15:22,906 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:15:23,351 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:15:23,351 | INFO     | proxy_manager | Rotating proxy session: None -> bjd2twmd
+2026-02-26 00:15:23,351 | INFO     | proxy_manager | Proxy rotated (reason: rotation_1) | Count: 1 | Session: bjd2twmd
+2026-02-26 00:15:24,039 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:15:24,039 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:15:24,040 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:15:24,040 | INFO     | browser_engine | Session ID: bjd2twmd
+2026-02-26 00:15:24,188 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:15:24,191 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_33d35e43
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=54712
+2026-02-26 00:15:25,046 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:15:25,077 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:15:25,326 | WARNING  | browser_engine | CDP proxy auth setup failed: did not receive a valid HTTP response — falling back to extension
+2026-02-26 00:15:25,331 | INFO     | browser_engine | Created proxy auth extension at: C:\Users\sohai\AppData\Local\Temp\qvc_proxy_auth_fxoyzwcy
+2026-02-26 00:15:25,332 | INFO     | browser_engine | Loading proxy auth extension as fallback...
+2026-02-26 00:15:25,332 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:15:27,381 | WARNING  | browser_engine | Navigation attempt 1 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:15:27,908 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:15:31,440 | WARNING  | browser_engine | Navigation attempt 2 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:15:35,491 | WARNING  | browser_engine | Navigation attempt 3 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:15:35,491 | ERROR    | browser_engine | Browser start failed: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:15:35,491 | INFO     | proxy_manager | Rotating proxy session: None -> 9o7zczys
+2026-02-26 00:15:35,492 | INFO     | proxy_manager | Proxy rotated (reason: connection) | Count: 2 | Session: 9o7zczys
+2026-02-26 00:15:35,492 | INFO     | browser_engine | Browser closed
+2026-02-26 00:15:35,494 | ERROR    | web_server | Session error for WD6915151: Failed to load https://www.qatarvisacenter.com after 3 attempts
+Traceback (most recent call last):
+  File "D:\QVC-bot\browser_engine.py", line 353, in start
+    self.page = await asyncio.wait_for(
+                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 277, in get
+    frame_id, loader_id, *_ = await connection.send(cdp.page.navigate(url))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 514, in send
+    await self.connect()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 329, in connect
+    self._websocket = await websockets.connect(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 541, in __await_impl__
+    self.connection = await self.create_connection()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 467, in create_connection
+    _, connection = await loop.create_connection(factory, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1171, in create_connection
+    raise exceptions[0]
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1146, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1045, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 728, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 401, in start
+    raise ConnectionError(f"Failed to load {config.BASE_URL} after {max_nav_retries} attempts")
+ConnectionError: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:15:35,505 | INFO     | web_server | [Bot] [WD6915151] Error: Failed to load https://www.qatarvisacenter.com aft
+2026-02-26 00:15:35,505 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:15:39,515 | INFO     | web_server | [Bot] [WD6915151] Rotating IP (rotation 2/60)...
+2026-02-26 00:15:39,515 | INFO     | proxy_manager | Rotating proxy session: None -> mmre1ps0
+2026-02-26 00:15:39,516 | INFO     | proxy_manager | Proxy rotated (reason: rotation_2) | Count: 3 | Session: mmre1ps0
+2026-02-26 00:15:39,517 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:15:39,517 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:15:39,518 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:15:39,518 | INFO     | browser_engine | Session ID: mmre1ps0
+2026-02-26 00:15:39,598 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:15:39,599 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_a039d273
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=61300
+2026-02-26 00:15:51,232 | WARNING  | browser_engine | Browser start attempt 1 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:15:53,243 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_beac5793
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=52542
+2026-02-26 00:16:04,788 | WARNING  | browser_engine | Browser start attempt 2 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:16:06,798 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_b32ad0fc
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=58236
+2026-02-26 00:16:18,303 | WARNING  | browser_engine | Browser start attempt 3 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:16:18,303 | ERROR    | browser_engine | Browser start failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:16:18,304 | INFO     | proxy_manager | Rotating proxy session: None -> 9t7966ff
+2026-02-26 00:16:18,304 | INFO     | proxy_manager | Proxy rotated (reason: connection) | Count: 4 | Session: 9t7966ff
+2026-02-26 00:16:18,304 | ERROR    | web_server | Session error for WD6915151: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 325, in start
+    self.browser = await uc.start(config=browser_config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\util.py", line 102, in start
+    return await Browser.create(config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 95, in create
+    await instance.start()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 439, in start
+    raise Exception(
+    ...<9 lines>...
+    )
+Exception: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:16:18,307 | INFO     | web_server | [Bot] [WD6915151] Error: 
+                ---------------------
+           
+2026-02-26 00:16:18,307 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:16:22,314 | INFO     | web_server | [Bot] [WD6915151] Rotating IP (rotation 3/60)...
+2026-02-26 00:16:22,315 | INFO     | proxy_manager | Rotating proxy session: None -> 05whokxj
+2026-02-26 00:16:22,315 | INFO     | proxy_manager | Proxy rotated (reason: rotation_3) | Count: 5 | Session: 05whokxj
+2026-02-26 00:16:22,317 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:16:22,317 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:16:22,317 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:16:22,318 | INFO     | browser_engine | Session ID: 05whokxj
+2026-02-26 00:16:22,441 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:16:22,442 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_4d787c5e
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=53019
+2026-02-26 00:16:34,113 | WARNING  | browser_engine | Browser start attempt 1 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:16:36,129 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_24040860
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=54005
+2026-02-26 00:16:38,636 | INFO     | web_server | [Bot] [WD6915151] Session cancelled
+2026-02-26 00:16:38,657 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped
+2026-02-26 00:16:39,895 | INFO     | s3_logger | Uploaded session logs to s3://qvclogs/logs/WD6915151/2026-02-26/sess_251e5373.log
+2026-02-26 00:16:57,015 | INFO     | __main__ | S3 session logging enabled
+2026-02-26 00:16:57,017 | INFO     | __main__ | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:16:57,145 | INFO     | web_server | S3 session logging enabled
+2026-02-26 00:16:57,146 | INFO     | web_server | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:16:57,150 | INFO     | web_server | Scheduler started
+2026-02-26 00:16:57,150 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-26 00:17:05,533 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:17:05,534 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:17:05,547 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:17:05,926 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:17:05,927 | INFO     | proxy_manager | Rotating proxy session: None -> 8gt46fm2
+2026-02-26 00:17:05,927 | INFO     | proxy_manager | Proxy rotated (reason: rotation_1) | Count: 1 | Session: 8gt46fm2
+2026-02-26 00:17:06,264 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:17:06,264 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:17:06,265 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:17:06,265 | INFO     | browser_engine | Session ID: 8gt46fm2
+2026-02-26 00:17:06,387 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:17:06,389 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_85ec1aa8
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--headless=new
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=53564
+2026-02-26 00:17:07,192 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:17:07,199 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:17:07,203 | INFO     | browser_engine | CDP proxy auth handler configured (user: ae206a2856858352a07d)
+2026-02-26 00:17:07,204 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:17:10,553 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:17:14,744 | WARNING  | browser_engine | Page verification failed (attempt 1): [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:18,795 | WARNING  | browser_engine | Navigation attempt 2 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:22,842 | WARNING  | browser_engine | Navigation attempt 3 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:22,843 | ERROR    | browser_engine | Browser start failed: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:17:22,843 | INFO     | proxy_manager | Rotating proxy session: None -> fjupnz3q
+2026-02-26 00:17:22,843 | INFO     | proxy_manager | Proxy rotated (reason: connection) | Count: 2 | Session: fjupnz3q
+2026-02-26 00:17:22,843 | INFO     | browser_engine | Browser closed
+2026-02-26 00:17:22,844 | ERROR    | web_server | Session error for WD6915151: Failed to load https://www.qatarvisacenter.com after 3 attempts
+Traceback (most recent call last):
+  File "D:\QVC-bot\browser_engine.py", line 353, in start
+    self.page = await asyncio.wait_for(
+                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 277, in get
+    frame_id, loader_id, *_ = await connection.send(cdp.page.navigate(url))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 514, in send
+    await self.connect()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 329, in connect
+    self._websocket = await websockets.connect(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 541, in __await_impl__
+    self.connection = await self.create_connection()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 467, in create_connection
+    _, connection = await loop.create_connection(factory, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1171, in create_connection
+    raise exceptions[0]
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1146, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1045, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 728, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 401, in start
+    raise ConnectionError(f"Failed to load {config.BASE_URL} after {max_nav_retries} attempts")
+ConnectionError: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:17:22,850 | INFO     | web_server | [Bot] [WD6915151] Error: Failed to load https://www.qatarvisacenter.com aft
+2026-02-26 00:17:22,850 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:17:26,859 | INFO     | web_server | [Bot] [WD6915151] Rotating IP (rotation 2/60)...
+2026-02-26 00:17:26,860 | INFO     | proxy_manager | Rotating proxy session: None -> 4t1f6kqb
+2026-02-26 00:17:26,860 | INFO     | proxy_manager | Proxy rotated (reason: rotation_2) | Count: 3 | Session: 4t1f6kqb
+2026-02-26 00:17:26,862 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:17:26,862 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:17:26,862 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:17:26,862 | INFO     | browser_engine | Session ID: 4t1f6kqb
+2026-02-26 00:17:26,935 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:17:26,936 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_1965d615
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--headless=new
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=63578
+2026-02-26 00:17:27,713 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:17:27,716 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:17:27,718 | INFO     | browser_engine | CDP proxy auth handler configured (user: ae206a2856858352a07d)
+2026-02-26 00:17:27,719 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:17:35,059 | WARNING  | browser_engine | Page verification failed (attempt 1): [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:39,114 | WARNING  | browser_engine | Navigation attempt 2 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:43,172 | WARNING  | browser_engine | Navigation attempt 3 failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:17:43,172 | ERROR    | browser_engine | Browser start failed: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:17:43,172 | INFO     | proxy_manager | Rotating proxy session: None -> 5lg1eutf
+2026-02-26 00:17:43,173 | INFO     | proxy_manager | Proxy rotated (reason: connection) | Count: 4 | Session: 5lg1eutf
+2026-02-26 00:17:43,173 | INFO     | browser_engine | Browser closed
+2026-02-26 00:17:43,173 | ERROR    | web_server | Session error for WD6915151: Failed to load https://www.qatarvisacenter.com after 3 attempts
+Traceback (most recent call last):
+  File "D:\QVC-bot\browser_engine.py", line 353, in start
+    self.page = await asyncio.wait_for(
+                ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\tasks.py", line 507, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 277, in get
+    frame_id, loader_id, *_ = await connection.send(cdp.page.navigate(url))
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 514, in send
+    await self.connect()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\connection.py", line 329, in connect
+    self._websocket = await websockets.connect(
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+    )
+    ^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 541, in __await_impl__
+    self.connection = await self.create_connection()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\websockets\asyncio\client.py", line 467, in create_connection
+    _, connection = await loop.create_connection(factory, **kwargs)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1171, in create_connection
+    raise exceptions[0]
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1146, in create_connection
+    sock = await self._connect_sock(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+        exceptions, addrinfo, laddr_infos)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 1045, in _connect_sock
+    await self.sock_connect(sock, address)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\proactor_events.py", line 728, in sock_connect
+    return await self._proactor.connect(sock, address)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 804, in _poll
+    value = callback(transferred, key, ov)
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\asyncio\windows_events.py", line 600, in finish_connect
+    ov.getresult()
+    ~~~~~~~~~~~~^^
+ConnectionRefusedError: [WinError 1225] The remote computer refused the network connection
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 401, in start
+    raise ConnectionError(f"Failed to load {config.BASE_URL} after {max_nav_retries} attempts")
+ConnectionError: Failed to load https://www.qatarvisacenter.com after 3 attempts
+2026-02-26 00:17:43,177 | INFO     | web_server | [Bot] [WD6915151] Error: Failed to load https://www.qatarvisacenter.com aft
+2026-02-26 00:17:43,177 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:17:47,185 | INFO     | web_server | [Bot] [WD6915151] Rotating IP (rotation 3/60)...
+2026-02-26 00:17:47,185 | INFO     | proxy_manager | Rotating proxy session: None -> 9w29k97s
+2026-02-26 00:17:47,186 | INFO     | proxy_manager | Proxy rotated (reason: rotation_3) | Count: 5 | Session: 9w29k97s
+2026-02-26 00:17:47,187 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:17:47,187 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:17:47,188 | INFO     | browser_engine | Proxy configured: gw.dataimpulse.com:823
+2026-02-26 00:17:47,188 | INFO     | browser_engine | Session ID: 9w29k97s
+2026-02-26 00:17:47,296 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:17:47,297 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_14267b9a
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--proxy-server=http://gw.dataimpulse.com:823
+	--headless=new
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=54801
+2026-02-26 00:17:48,069 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:17:48,075 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:17:48,080 | INFO     | browser_engine | CDP proxy auth handler configured (user: ae206a2856858352a07d)
+2026-02-26 00:17:48,081 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:18:00,019 | INFO     | web_server | [Bot] [WD6915151] Session cancelled
+2026-02-26 00:18:00,019 | INFO     | browser_engine | Browser closed
+2026-02-26 00:18:00,020 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped
+2026-02-26 00:18:05,660 | INFO     | __main__ | S3 session logging enabled
+2026-02-26 00:18:05,661 | INFO     | __main__ | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:18:05,734 | INFO     | web_server | S3 session logging enabled
+2026-02-26 00:18:05,736 | INFO     | web_server | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:18:05,740 | INFO     | web_server | Scheduler started
+2026-02-26 00:18:05,740 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-26 00:18:15,009 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:18:15,009 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:18:15,010 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:18:15,010 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:18:15,010 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:18:15,010 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:18:15,010 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:18:15,012 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:18:15,401 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:18:15,739 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:18:15,739 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:18:15,845 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:18:15,847 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_0af5d829
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--headless=new
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=60986
+2026-02-26 00:18:16,656 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:18:16,661 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:18:16,662 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:18:20,013 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:18:24,286 | INFO     | browser_engine | Page loaded - URL: https://www.qatarvisacenter.com/
+2026-02-26 00:18:24,287 | INFO     | browser_engine | Page title: 'Attention Required! | Cloudflare'
+2026-02-26 00:18:24,287 | INFO     | browser_engine | Page body preview: Sorry, you have been blocked
+You are unable to access qatarvisacenter.com
+Why have I been blocked?
+
+This website is using a security service to protect itself from online attacks. The action you just 
+2026-02-26 00:18:24,288 | INFO     | bandwidth_monitor | ✓ Bandwidth monitor attached successfully
+2026-02-26 00:18:24,289 | INFO     | browser_engine | Navigated to: https://www.qatarvisacenter.com/ | Title: Attention Required! | Cloudflare
+2026-02-26 00:18:24,289 | INFO     | browser_engine | Browser started successfully
+2026-02-26 00:18:24,289 | INFO     | web_server | [Bot] [WD6915151] Session duration: 5 min
+2026-02-26 00:18:24,290 | INFO     | browser_engine | ============================================================
+2026-02-26 00:18:24,290 | INFO     | browser_engine | BOOKING ATTEMPT 1/3
+2026-02-26 00:18:24,290 | INFO     | browser_engine | Applicant: WD6915151
+2026-02-26 00:18:24,290 | INFO     | browser_engine | Date range: 2025-02-01 to 2025-03-31
+2026-02-26 00:18:24,290 | INFO     | browser_engine | Center: Islamabad
+2026-02-26 00:18:24,290 | INFO     | browser_engine | ============================================================
+2026-02-26 00:18:24,290 | INFO     | browser_engine | Logging in: WD6915151
+2026-02-26 00:18:24,291 | INFO     | browser_engine | Navigating landing page - Language: English, Country: Pakistan
+2026-02-26 00:18:26,904 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:28,920 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:30,927 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:32,939 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:35,012 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:37,026 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:39,031 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:41,045 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:43,057 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:45,061 | INFO     | browser_engine | Waiting for page to render...
+2026-02-26 00:18:47,073 | INFO     | browser_engine | Selecting language...
+2026-02-26 00:18:49,104 | INFO     | browser_engine | Selecting country: Pakistan
+2026-02-26 00:18:54,122 | INFO     | browser_engine | Clicking Book Appointment button...
+2026-02-26 00:19:40,164 | WARNING  | browser_engine | Expected schedule page, got: https://www.qatarvisacenter.com/
+2026-02-26 00:19:45,762 | INFO     | browser_engine | Filling passport number...
+2026-02-26 00:20:04,099 | INFO     | web_server | [Bot] [WD6915151] Session cancelled
+2026-02-26 00:20:04,100 | INFO     | nodriver.core.browser | terminated browser with pid 35876 successfully
+2026-02-26 00:20:04,100 | INFO     | browser_engine | Browser closed
+2026-02-26 00:20:04,101 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped
+2026-02-26 00:20:08,845 | INFO     | __main__ | S3 session logging enabled
+2026-02-26 00:20:08,846 | INFO     | __main__ | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:20:08,927 | INFO     | web_server | S3 session logging enabled
+2026-02-26 00:20:08,928 | INFO     | web_server | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:20:08,932 | INFO     | web_server | Scheduler started
+2026-02-26 00:20:08,932 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-26 00:20:19,099 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:20:19,100 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:20:19,100 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:20:19,101 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:20:19,101 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:20:19,101 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:20:19,101 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:20:19,103 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:20:19,512 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:20:19,835 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:20:19,835 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:20:19,946 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:20:19,949 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_4f62b371
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=58705
+2026-02-26 00:20:24,114 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:20:31,533 | WARNING  | browser_engine | Browser start attempt 1 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:20:33,544 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_9fdedd90
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=63573
+2026-02-26 00:20:45,104 | WARNING  | browser_engine | Browser start attempt 2 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:20:47,116 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_4c20ce5d
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=56258
+2026-02-26 00:20:58,651 | WARNING  | browser_engine | Browser start attempt 3 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:20:58,651 | ERROR    | browser_engine | Browser start failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:20:58,651 | ERROR    | web_server | Session error for WD6915151: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 325, in start
+    self.browser = await uc.start(config=browser_config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\util.py", line 102, in start
+    return await Browser.create(config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 95, in create
+    await instance.start()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 439, in start
+    raise Exception(
+    ...<9 lines>...
+    )
+Exception: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:20:58,655 | INFO     | web_server | [Bot] [WD6915151] Error: 
+                ---------------------
+           
+2026-02-26 00:20:58,672 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:21:02,681 | INFO     | web_server | [Bot] [WD6915151] Session completed after 1 rotations - no slots found
+2026-02-26 00:21:03,758 | INFO     | s3_logger | Uploaded session logs to s3://qvclogs/logs/WD6915151/2026-02-26/sess_d73da6d3.log
+2026-02-26 00:21:03,761 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:21:03,761 | INFO     | web_server | [Bot] All sessions completed - no slots found
+2026-02-26 00:21:03,761 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:21:03,762 | INFO     | web_server | [Bot] Final: 1 completed, 0 failed, 0 stopped
+2026-02-26 00:21:18,450 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:21:18,451 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:21:18,451 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:21:18,451 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:21:18,452 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:21:18,452 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:21:18,452 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:21:18,454 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:21:18,454 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:21:18,457 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:21:18,457 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:21:18,577 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:21:18,578 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_648f771e
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=62569
+2026-02-26 00:21:23,461 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:21:30,231 | WARNING  | browser_engine | Browser start attempt 1 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:21:32,241 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_54ac9831
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=61421
+2026-02-26 00:21:43,813 | WARNING  | browser_engine | Browser start attempt 2 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:21:45,815 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_bf647e61
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--no-zygote
+	--single-process
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=59728
+2026-02-26 00:21:57,390 | WARNING  | browser_engine | Browser start attempt 3 failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:21:57,391 | ERROR    | browser_engine | Browser start failed: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:21:57,391 | ERROR    | web_server | Session error for WD6915151: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+Traceback (most recent call last):
+  File "D:\QVC-bot\web_server.py", line 375, in _run_single_session
+    await browser.start()
+  File "D:\QVC-bot\browser_engine.py", line 325, in start
+    self.browser = await uc.start(config=browser_config)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\util.py", line 102, in start
+    return await Browser.create(config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 95, in create
+    await instance.start()
+  File "C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\nodriver\core\browser.py", line 439, in start
+    raise Exception(
+    ...<9 lines>...
+    )
+Exception: 
+                ---------------------
+                Failed to connect to browser
+                ---------------------
+                One of the causes could be when you are running as root.
+                In that case you need to pass no_sandbox=True 
+                
+2026-02-26 00:21:57,393 | INFO     | web_server | [Bot] [WD6915151] Error: 
+                ---------------------
+           
+2026-02-26 00:21:57,393 | INFO     | web_server | [Bot] [WD6915151] Retrying with new IP...
+2026-02-26 00:22:01,400 | INFO     | web_server | [Bot] [WD6915151] Session completed after 1 rotations - no slots found
+2026-02-26 00:22:03,197 | INFO     | s3_logger | Uploaded session logs to s3://qvclogs/logs/WD6915151/2026-02-26/sess_2dd4f19d.log
+2026-02-26 00:22:03,199 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:22:03,200 | INFO     | web_server | [Bot] All sessions completed - no slots found
+2026-02-26 00:22:03,200 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:22:03,200 | INFO     | web_server | [Bot] Final: 1 completed, 0 failed, 0 stopped
+2026-02-26 00:22:23,818 | INFO     | web_server | Shutting down - cleaning up...
+2026-02-26 00:22:23,819 | INFO     | web_server | Force stop initiated for all sessions
+2026-02-26 00:22:23,819 | INFO     | web_server | [Bot] All sessions force stopped
+2026-02-26 00:22:23,819 | INFO     | web_server | Shutdown complete
+2026-02-26 00:22:51,946 | INFO     | __main__ | S3 session logging enabled
+2026-02-26 00:22:51,947 | INFO     | __main__ | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:22:52,040 | INFO     | web_server | S3 session logging enabled
+2026-02-26 00:22:52,041 | INFO     | web_server | Serving static files from: D:\QVC-bot\web
+2026-02-26 00:22:52,046 | INFO     | web_server | Scheduler started
+2026-02-26 00:22:52,046 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-02-26 00:23:01,844 | INFO     | web_server | Bot started for 1 applicants (max parallel: 10)
+2026-02-26 00:23:01,845 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:23:01,845 | INFO     | web_server | [Bot] PARALLEL BOT STARTED
+2026-02-26 00:23:01,846 | INFO     | web_server | [Bot] Center: Islamabad
+2026-02-26 00:23:01,846 | INFO     | web_server | [Bot] Applicants: 1
+2026-02-26 00:23:01,846 | INFO     | web_server | [Bot] Max parallel: 10
+2026-02-26 00:23:01,846 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:23:01,848 | INFO     | web_server | [Bot] [WD6915151] Created session 1/1
+2026-02-26 00:23:02,235 | INFO     | web_server | [Bot] [WD6915151] Starting session...
+2026-02-26 00:23:02,572 | WARNING  | captcha_solver | Failed to initialize ddddocr: cannot import name 'DdddOcr' from 'ddddocr.core' (C:\Users\sohai\AppData\Local\Programs\Python\Python313\Lib\site-packages\ddddocr\core\__init__.py)
+2026-02-26 00:23:02,573 | INFO     | browser_engine | Starting browser...
+2026-02-26 00:23:02,697 | INFO     | browser_engine | Chrome at known path: C:\Program Files\Google\Chrome\Application\chrome.exe
+2026-02-26 00:23:02,700 | INFO     | nodriver.core.browser | starting
+	executable :C:\Program Files\Google\Chrome\Application\chrome.exe
+
+arguments:
+--remote-allow-origins=*
+	--no-first-run
+	--no-service-autorun
+	--no-default-browser-check
+	--homepage=about:blank
+	--no-pings
+	--password-store=basic
+	--disable-infobars
+	--disable-breakpad
+	--disable-dev-shm-usage
+	--disable-session-crashed-bubble
+	--disable-search-engine-choice-screen
+	--user-data-dir=C:\Users\sohai\AppData\Local\Temp\chrome_uc_f5d91251
+	--disable-session-crashed-bubble
+	--disable-features=IsolateOrigins,site-per-process
+	--disable-setuid-sandbox
+	--window-size=1920,1080
+	--start-maximized
+	--disable-blink-features=AutomationControlled
+	--disable-default-apps
+	--disable-sync
+	--disable-translate
+	--mute-audio
+	--disable-gpu
+	--disable-software-rasterizer
+	--disable-extensions
+	--disable-background-networking
+	--disable-background-timer-throttling
+	--disable-backgrounding-occluded-windows
+	--disable-renderer-backgrounding
+	--disable-component-update
+	--disable-hang-monitor
+	--disable-popup-blocking
+	--disable-prompt-on-repost
+	--metrics-recording-only
+	--js-flags=--max-old-space-size=128
+	--no-sandbox
+	--remote-debugging-host=127.0.0.1
+	--remote-debugging-port=58886
+2026-02-26 00:23:03,507 | INFO     | nodriver.core.browser | enabling autodiscover targets
+2026-02-26 00:23:03,512 | INFO     | browser_engine | Browser process started (attempt 1)
+2026-02-26 00:23:03,512 | INFO     | browser_engine | Navigating to https://www.qatarvisacenter.com...
+2026-02-26 00:23:06,860 | INFO     | web_server | [Bot] All 1 sessions started, waiting for completion...
+2026-02-26 00:23:09,008 | INFO     | browser_engine | Page loaded - URL: https://www.qatarvisacenter.com/
+2026-02-26 00:23:09,008 | INFO     | browser_engine | Page title: 'Attention Required! | Cloudflare'
+2026-02-26 00:23:09,008 | INFO     | browser_engine | Page body preview: Sorry, you have been blocked
+You are unable to access qatarvisacenter.com
+Why have I been blocked?
+
+This website is using a security service to protect itself from online attacks. The action you just 
+2026-02-26 00:23:09,010 | INFO     | bandwidth_monitor | ✓ Bandwidth monitor attached successfully
+2026-02-26 00:23:09,012 | INFO     | browser_engine | Navigated to: https://www.qatarvisacenter.com/ | Title: Attention Required! | Cloudflare
+2026-02-26 00:23:09,012 | INFO     | browser_engine | Browser started successfully
+2026-02-26 00:23:09,012 | INFO     | web_server | [Bot] [WD6915151] Session duration: 5 min
+2026-02-26 00:23:09,013 | INFO     | browser_engine | ============================================================
+2026-02-26 00:23:09,013 | INFO     | browser_engine | BOOKING ATTEMPT 1/3
+2026-02-26 00:23:09,013 | INFO     | browser_engine | Applicant: WD6915151
+2026-02-26 00:23:09,013 | INFO     | browser_engine | Date range: 2025-02-01 to 2025-03-31
+2026-02-26 00:23:09,013 | INFO     | browser_engine | Center: Islamabad
+2026-02-26 00:23:09,014 | INFO     | browser_engine | ============================================================
+2026-02-26 00:23:09,014 | INFO     | browser_engine | Logging in: WD6915151
+2026-02-26 00:23:09,014 | INFO     | browser_engine | Navigating landing page - Language: English, Country: Pakistan
+2026-02-26 00:23:13,875 | ERROR    | browser_engine | Landing page navigation failed: [WinError 1225] The remote computer refused the network connection
+2026-02-26 00:23:13,876 | ERROR    | browser_engine | Failed to navigate landing page
+2026-02-26 00:23:13,876 | ERROR    | browser_engine | Login failed
+2026-02-26 00:23:13,876 | INFO     | browser_engine | ============================================================
+2026-02-26 00:23:13,876 | INFO     | browser_engine | BOOKING ATTEMPT 2/3
+2026-02-26 00:23:13,876 | INFO     | browser_engine | Applicant: WD6915151
+2026-02-26 00:23:13,877 | INFO     | browser_engine | Date range: 2025-02-01 to 2025-03-31
+2026-02-26 00:23:13,877 | INFO     | browser_engine | Center: Islamabad
+2026-02-26 00:23:13,877 | INFO     | browser_engine | ============================================================
+2026-02-26 00:23:13,877 | INFO     | browser_engine | Logging in: WD6915151
+2026-02-26 00:23:13,877 | INFO     | browser_engine | Navigating landing page - Language: English, Country: Pakistan
+2026-02-26 00:23:15,050 | INFO     | web_server | Force stop initiated for all sessions
+2026-02-26 00:23:15,050 | INFO     | browser_engine | Browser closed
+2026-02-26 00:23:15,051 | INFO     | web_server | Browser force closed for session sess_0fc5fe70
+2026-02-26 00:23:15,051 | INFO     | web_server | [Bot] All sessions force stopped
+2026-02-26 00:23:15,051 | INFO     | web_server | Bot stopped by user
+2026-02-26 00:23:15,052 | INFO     | web_server | [Bot] [WD6915151] Session cancelled
+2026-02-26 00:23:15,963 | INFO     | web_server | [Bot] Stop requested - cancelling all sessions
+2026-02-26 00:23:15,967 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:23:15,967 | INFO     | web_server | [Bot] All sessions completed - no slots found
+2026-02-26 00:23:15,967 | INFO     | web_server | [Bot] ==================================================
+2026-02-26 00:23:15,968 | INFO     | web_server | [Bot] Final: 0 completed, 0 failed, 1 stopped
+2026-02-26 00:23:17,831 | INFO     | web_server | Shutting down - cleaning up...
+2026-02-26 00:23:17,831 | INFO     | web_server | Force stop initiated for all sessions
+2026-02-26 00:23:17,831 | INFO     | web_server | [Bot] All sessions force stopped
+2026-02-26 00:23:17,831 | INFO     | web_server | Shutdown complete
