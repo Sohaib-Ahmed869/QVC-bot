@@ -207,31 +207,19 @@ chrome.webRequest.onAuthRequired.addListener(
     async def start(self):
         logger.info("Starting browser...")
 
+        # Minimal flags — won't break Angular JS rendering
         browser_args = [
+            "--no-sandbox",
             "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
             "--window-size=1920,1080",
-            "--start-maximized",
             "--disable-blink-features=AutomationControlled",
-            "--disable-default-apps",
-            "--disable-sync",
-            "--disable-translate",
+            "--disable-infobars",
             "--mute-audio",
             "--disable-gpu",
-            "--disable-software-rasterizer",
-            "--disable-extensions",
-            "--disable-background-networking",
-            "--disable-background-timer-throttling",
-            "--disable-backgrounding-occluded-windows",
-            "--disable-renderer-backgrounding",
-            "--disable-component-update",
-            "--disable-hang-monitor",
-            "--disable-popup-blocking",
-            "--disable-prompt-on-repost",
-            "--metrics-recording-only",
-            "--js-flags=--max-old-space-size=128",
         ]
 
-        # Linux-only flags (break Chrome on Windows)
+        # Linux/Docker only — do NOT add --single-process, it breaks Angular
         if platform.system() != "Windows":
             browser_args += [
                 "--no-zygote",
@@ -293,13 +281,15 @@ chrome.webRequest.onAuthRequired.addListener(
                         self.browser.get(config.BASE_URL, new_tab=False),
                         timeout=30
                     )
-                    await asyncio.sleep(5)
+
+                    # Give Angular more time to boot
+                    await asyncio.sleep(8)
 
                     try:
                         title = await self.page.evaluate("document.title")
                         url = self.page.url
                         body_text = await self.page.evaluate(
-                            "document.body ? document.body.innerText.substring(0, 500) : 'NO BODY'"
+                            "document.body ? document.body.innerText.substring(0, 300) : 'NO BODY'"
                         )
                         logger.info(f"Page loaded - URL: {url}")
                         logger.info(f"Page title: '{title}'")
@@ -488,30 +478,43 @@ chrome.webRequest.onAuthRequired.addListener(
         logger.info(f"Navigating landing page - Language: {language}, Country: {country}")
 
         try:
-            # Check if already on schedule page
             if "schedule" in self.page.url:
                 logger.info("Already on schedule page, skipping landing navigation")
                 return True
 
-            # Load base URL
             await self.page.get(config.BASE_URL)
-            await asyncio.sleep(2)
+            await asyncio.sleep(3)
 
-            # Wait for Angular to render language dropdown
-            for _ in range(10):
-                el = await self.page.evaluate(
-                    "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
-                )
-                if el:
+            # Wait for Angular to fully render
+            angular_ready = False
+            for i in range(20):
+                result = await self.page.evaluate("""
+                    (() => {
+                        const root = document.querySelector('qvc-root');
+                        const langInput = document.querySelector("input[placeholder='-- Select Language --']");
+                        const links = document.querySelectorAll('a').length;
+                        return {
+                            hasRoot: root !== null,
+                            rootContent: root ? root.innerHTML.length : 0,
+                            hasLangInput: langInput !== null,
+                            linkCount: links
+                        };
+                    })()
+                """)
+                logger.info(f"Angular check {i+1}: {result}")
+                if result.get('hasLangInput'):
+                    angular_ready = True
+                    logger.info("Angular fully rendered!")
                     break
-                logger.info("Waiting for page to render...")
                 await asyncio.sleep(2)
 
-            # Debug: log page state
-            body = await self.page.evaluate("document.body.innerHTML.substring(0, 500)")
-            logger.info(f"Page body after wait: {body}")
+            if not angular_ready:
+                logger.error("Angular never rendered — dumping full HTML for debug")
+                full_html = await self.page.evaluate("document.documentElement.outerHTML")
+                logger.info(f"Full HTML ({len(full_html)} chars): {full_html[:2000]}")
+                return False
 
-            # Select language — full Angular-compatible event chain
+            # Select language
             logger.info("Selecting language...")
             await self.page.evaluate("""
                 const input = document.querySelector("input[placeholder='-- Select Language --']");
@@ -535,13 +538,12 @@ chrome.webRequest.onAuthRequired.addListener(
             """)
             await asyncio.sleep(1)
 
-            # Debug: check language value
             lang_val = await self.page.evaluate("""
                 document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
             """)
             logger.info(f"Language input value after selection: {lang_val}")
 
-            # Select country — full Angular-compatible event chain
+            # Select country
             logger.info(f"Selecting country: {country}")
             await self.page.evaluate("""
                 const input = document.querySelector("input[placeholder='-- Select Country --']");
@@ -565,7 +567,6 @@ chrome.webRequest.onAuthRequired.addListener(
             """)
             await asyncio.sleep(2)
 
-            # Debug: check country value and all links
             country_val = await self.page.evaluate("""
                 document.querySelector("input[placeholder='-- Select Country --']")?.value || 'EMPTY'
             """)
@@ -578,10 +579,10 @@ chrome.webRequest.onAuthRequired.addListener(
             """)
             logger.info(f"All links on page: {all_links}")
 
-            # Wait for Book Appointment button
+            # Wait for and click Book Appointment
             if "schedule" not in self.page.url:
                 logger.info("Waiting for Book Appointment button...")
-                for _ in range(10):
+                for _ in range(15):
                     found = await self.page.evaluate("""
                         Array.from(document.querySelectorAll("a")).some(
                             a => a.textContent.trim().toLowerCase().includes('book')
@@ -608,7 +609,6 @@ chrome.webRequest.onAuthRequired.addListener(
                 await asyncio.sleep(5)
                 logger.info(f"URL after book click: {self.page.url}")
 
-            # Verify navigation
             if "schedule" in self.page.url:
                 logger.info("Successfully navigated to schedule page")
                 return True
@@ -619,7 +619,7 @@ chrome.webRequest.onAuthRequired.addListener(
                 return True
 
             logger.warning(f"Expected schedule page, got: {self.page.url}")
-            return True  # Continue anyway
+            return True
 
         except Exception as e:
             logger.error(f"Landing page navigation failed: {e}")
@@ -642,7 +642,6 @@ chrome.webRequest.onAuthRequired.addListener(
                 return None
 
             src = img_element.attrs.get("src")
-
             if not src:
                 logger.debug("CAPTCHA src not in attributes, trying eval...")
                 src = await img_element.eval("this.src")
@@ -818,7 +817,6 @@ chrome.webRequest.onAuthRequired.addListener(
 
             await asyncio.sleep(2)
 
-            # Close attention popup if present
             try:
                 popup_close = await self._wait_for(selectors.POPUP_CLOSE_BTN, timeout=3)
                 if popup_close:
@@ -828,21 +826,18 @@ chrome.webRequest.onAuthRequired.addListener(
             except:
                 pass
 
-            # Fill passport number
             logger.info("Filling passport number...")
             if not await self._type(selectors.PASSPORT_INPUT, applicant.passport_number):
                 if not await self._type_xpath(selectors.PASSPORT_INPUT_XPATH, applicant.passport_number):
                     logger.error("Failed to enter passport number")
                     return False
 
-            # Fill visa number
             logger.info("Filling visa number...")
             if not await self._type(selectors.VISA_INPUT, applicant.visa_number):
                 if not await self._type_xpath(selectors.VISA_INPUT_XPATH, applicant.visa_number):
                     logger.error("Failed to enter visa number")
                     return False
 
-            # CAPTCHA + Submit loop
             max_attempts = 5
             for attempt in range(1, max_attempts + 1):
                 logger.info(f"=== Login attempt {attempt}/{max_attempts} ===")
