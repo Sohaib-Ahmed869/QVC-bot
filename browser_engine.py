@@ -502,7 +502,11 @@ chrome.webRequest.onAuthRequired.addListener(
                     })()
                 """)
                 logger.info(f"Angular check {i+1}: {result}")
-                if result.get('hasLangInput'):
+                has_lang_input = any(
+                    item[1].get('value') for item in result 
+                    if item[0] == 'hasLangInput'
+                )
+                if has_lang_input:
                     angular_ready = True
                     logger.info("Angular fully rendered!")
                     break
