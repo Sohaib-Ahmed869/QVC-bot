@@ -518,49 +518,69 @@ chrome.webRequest.onAuthRequired.addListener(
                 logger.info(f"Full HTML ({len(full_html)} chars): {full_html[:2000]}")
                 return False
 
-            # Select language
-            logger.info("Selecting language...")
-            await self.page.evaluate("""
-                const input = document.querySelector("input[placeholder='-- Select Language --']");
-                if (input) {
-                    input.click();
-                    input.dispatchEvent(new Event('click', {bubbles: true}));
-                }
-            """)
-            await asyncio.sleep(1)
-            await self.page.evaluate("""
-                const links = document.querySelectorAll("ul.dropdown-menu li a");
-                for (const a of links) {
-                    if (a.textContent.trim() === 'English') {
-                        a.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                        a.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                        a.click();
-                        a.dispatchEvent(new Event('change', {bubbles: true}));
-                        break;
+            # Select language (with retry until confirmed)
+            language_selected = False
+            for lang_attempt in range(5):
+                logger.info(f"Selecting language (attempt {lang_attempt + 1}/5)...")
+                await self.page.evaluate("""
+                    const input = document.querySelector("input[placeholder='-- Select Language --']");
+                    if (input) {
+                        input.click();
+                        input.dispatchEvent(new Event('click', {bubbles: true}));
                     }
-                }
-            """)
-            await asyncio.sleep(1)
+                """)
+                await asyncio.sleep(1)
+                await self.page.evaluate("""
+                    const links = document.querySelectorAll("ul.dropdown-menu li a");
+                    for (const a of links) {
+                        if (a.textContent.trim() === 'English') {
+                            a.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                            a.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                            a.click();
+                            a.dispatchEvent(new Event('change', {bubbles: true}));
+                            break;
+                        }
+                    }
+                """)
+                await asyncio.sleep(1)
 
-            # Close dropdown by clicking body, then wait for country dropdown
-            await self.page.evaluate("document.body.click()")
-            await asyncio.sleep(1)
+                await self.page.evaluate("document.body.click()")
+                await asyncio.sleep(1)
 
-            # Wait for country dropdown to be ready
-            for _ in range(5):
+                lang_val = await self.page.evaluate("""
+                    document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
+                """)
+                logger.info(f"Language input value: {lang_val}")
+
+                if lang_val and lang_val not in ('EMPTY', '', '-- Select Language --'):
+                    language_selected = True
+                    logger.info(f"✓ Language confirmed: {lang_val}")
+                    break
+
+                logger.warning(f"Language not selected yet (got: '{lang_val}'), retrying...")
+                await asyncio.sleep(2)
+
+            if not language_selected:
+                logger.error("Failed to select language after 5 attempts")
+                return False
+
+            # Wait for country dropdown (only appears after language is selected)
+            country_ready = False
+            for _ in range(10):
                 country_ready = await self.page.evaluate(
                     "document.querySelector(\"input[placeholder='-- Select Country --']\") !== null"
                 )
                 if country_ready:
+                    logger.info("✓ Country dropdown available")
                     break
+                logger.info("Waiting for country dropdown...")
                 await asyncio.sleep(1)
+
+            if not country_ready:
+                logger.error("Country dropdown never appeared after language selection")
+                return False
+
             await asyncio.sleep(1)
-
-            lang_val = await self.page.evaluate("""
-                document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
-            """)
-            logger.info(f"Language input value after selection: {lang_val}")
-
             # Select country
             logger.info(f"Selecting country: {country}")
             await self.page.evaluate("""
