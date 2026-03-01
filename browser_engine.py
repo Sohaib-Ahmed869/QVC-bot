@@ -485,362 +485,102 @@ chrome.webRequest.onAuthRequired.addListener(
             await self.page.get(config.BASE_URL)
             await asyncio.sleep(3)
 
-            # Wait for Angular to fully render
-            angular_ready = False
+            # Wait for Angular
             for i in range(20):
-                result = await self.page.evaluate("""
-                    (() => {
-                        const root = document.querySelector('qvc-root');
-                        const langInput = document.querySelector("input[placeholder='-- Select Language --']");
-                        return {
-                            hasRoot: root !== null,
-                            rootContent: root ? root.innerHTML.length : 0,
-                            hasLangInput: langInput !== null,
-                        };
-                    })()
-                """)
-                logger.info(f"Angular check {i+1}: {result}")
-                has_lang_input = any(
-                    item[1].get('value') for item in result
-                    if item[0] == 'hasLangInput'
+                has_input = await self.page.evaluate(
+                    "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
                 )
-                if has_lang_input:
-                    angular_ready = True
-                    logger.info("Angular fully rendered!")
+                if has_input:
+                    logger.info(f"Angular ready after {i+1} checks")
                     break
                 await asyncio.sleep(2)
 
-            if not angular_ready:
-                logger.error("Angular never rendered")
-                full_html = await self.page.evaluate("document.documentElement.outerHTML")
-                logger.info(f"Full HTML ({len(full_html)} chars): {full_html[:2000]}")
-                return False
+            # CDP click the input to open dropdown
+            coords = await self.page.evaluate("""
+                (() => {
+                    const input = document.querySelector("input[placeholder='-- Select Language --']");
+                    const rect = input.getBoundingClientRect();
+                    return {x: rect.x + rect.width/2, y: rect.y + rect.height/2};
+                })()
+            """)
 
-            # ── Helper: CDP real mouse click at coordinates ──
-            async def _cdp_click(x: float, y: float):
-                await self.page.send(cdp.input_.dispatch_mouse_event(
-                    type_="mousePressed",
-                    x=x, y=y,
-                    button=cdp.input_.MouseButton("left"),
-                    click_count=1
-                ))
-                await asyncio.sleep(0.05)
-                await self.page.send(cdp.input_.dispatch_mouse_event(
-                    type_="mouseReleased",
-                    x=x, y=y,
-                    button=cdp.input_.MouseButton("left"),
-                    click_count=1
-                ))
+            if isinstance(coords, list):
+                ix = next(v[1]['value'] if isinstance(v[1], dict) else v[1] for v in coords if v[0] == 'x')
+                iy = next(v[1]['value'] if isinstance(v[1], dict) else v[1] for v in coords if v[0] == 'y')
+            else:
+                ix, iy = coords['x'], coords['y']
 
-            # ── Helper: select Bootstrap dropdown ──
-            async def _select_dropdown(placeholder: str, option_text: str, label: str) -> bool:
-                for attempt in range(5):
-                    logger.info(f"[{label}] Attempt {attempt + 1}/5 - selecting '{option_text}'")
-
-                    # Step 1: Get input coordinates and click it with CDP
-                    input_coords = await self.page.evaluate(f"""
-                        (() => {{
-                            const input = document.querySelector("input[placeholder='{placeholder}']");
-                            if (!input) return null;
-                            const rect = input.getBoundingClientRect();
-                            return {{x: rect.x + rect.width/2, y: rect.y + rect.height/2}};
-                        }})()
-                    """)
-                    logger.info(f"[{label}] Input coords: {input_coords}")
-
-                    if not input_coords:
-                        logger.warning(f"[{label}] Input not found")
-                        await asyncio.sleep(2)
-                        continue
-
-                    # Parse coords (nodriver returns list of tuples)
-                    if isinstance(input_coords, list):
-                        ix = next(v[1] if isinstance(v[1], (int, float)) else v[1].get('value', 0) for v in input_coords if v[0] == 'x')
-                        iy = next(v[1] if isinstance(v[1], (int, float)) else v[1].get('value', 0) for v in input_coords if v[0] == 'y')
-                    else:
-                        ix = input_coords.get('x', 0)
-                        iy = input_coords.get('y', 0)
-
-                    logger.info(f"[{label}] Clicking input at ({ix}, {iy})")
-                    await _cdp_click(float(ix), float(iy))
-                    await asyncio.sleep(1)
-
-                    # Step 2: Force dropdown open via Bootstrap API + CSS fallback
-                    await self.page.evaluate(f"""
-                        (() => {{
-                            const input = document.querySelector("input[placeholder='{placeholder}']");
-                            const dropdown = input?.closest('.dropdown');
-                            const menu = dropdown?.querySelector('ul.dropdown-menu');
-                            if (menu) {{
-                                // Force show via Bootstrap class
-                                menu.classList.add('show');
-                                menu.style.display = 'block';
-                            }}
-                            // Also try Bootstrap 5 API
-                            if (typeof bootstrap !== 'undefined' && input) {{
-                                try {{
-                                    const bsDropdown = bootstrap.Dropdown.getOrCreateInstance(input);
-                                    bsDropdown.show();
-                                }} catch(e) {{}}
-                            }}
-                        }})()
-                    """)
-                    await asyncio.sleep(0.5)
-
-                    # Step 3: Check if dropdown is now visible and get option coords
-                    option_info = await self.page.evaluate(f"""
-                        (() => {{
-                            const input = document.querySelector("input[placeholder='{placeholder}']");
-                            const dropdown = input?.closest('.dropdown');
-                            const menu = dropdown?.querySelector('ul.dropdown-menu');
-                            if (!menu) return {{error: 'no menu'}};
-
-                            const menuStyle = window.getComputedStyle(menu);
-                            const menuRect = menu.getBoundingClientRect();
-                            const links = menu.querySelectorAll('a');
-                            const allItems = Array.from(links).map(a => a.textContent.trim());
-
-                            let targetCoords = null;
-                            for (const a of links) {{
-                                if (a.textContent.trim() === '{option_text}') {{
-                                    const rect = a.getBoundingClientRect();
-                                    targetCoords = {{
-                                        x: rect.x + rect.width/2,
-                                        y: rect.y + rect.height/2,
-                                        w: rect.width,
-                                        h: rect.height
-                                    }};
-                                    break;
-                                }}
-                            }}
-
-                            return {{
-                                menuDisplay: menuStyle.display,
-                                menuVisible: menuRect.height > 0,
-                                menuRect: {{x: menuRect.x, y: menuRect.y, w: menuRect.width, h: menuRect.height}},
-                                items: allItems,
-                                targetCoords: targetCoords
-                            }};
-                        }})()
-                    """)
-                    logger.info(f"[{label}] Dropdown state: {option_info}")
-
-                    # Parse target coordinates
-                    target_coords = None
-                    if isinstance(option_info, list):
-                        for item in option_info:
-                            if item[0] == 'targetCoords' and item[1] is not None:
-                                tc = item[1]
-                                if isinstance(tc, list):
-                                    target_coords = {v[0]: (v[1].get('value') if isinstance(v[1], dict) else v[1]) for v in tc}
-                                elif isinstance(tc, dict):
-                                    target_coords = tc
-                    elif isinstance(option_info, dict):
-                        target_coords = option_info.get('targetCoords')
-
-                    if target_coords and target_coords.get('y', 0) > 0:
-                        tx = float(target_coords['x'])
-                        ty = float(target_coords['y'])
-                        logger.info(f"[{label}] Clicking '{option_text}' at ({tx}, {ty})")
-                        await _cdp_click(tx, ty)
-                        await asyncio.sleep(1.5)
-                    else:
-                        logger.warning(f"[{label}] Option '{option_text}' not visible or coords invalid")
-                        # Last resort: JS click directly
-                        await self.page.evaluate(f"""
-                            (() => {{
-                                const input = document.querySelector("input[placeholder='{placeholder}']");
-                                const dropdown = input?.closest('.dropdown');
-                                const links = dropdown?.querySelectorAll('ul.dropdown-menu a') || [];
-                                for (const a of links) {{
-                                    if (a.textContent.trim() === '{option_text}') {{
-                                        a.click();
-                                        break;
-                                    }}
-                                }}
-                            }})()
-                        """)
-                        await asyncio.sleep(1.5)
-
-                    # Step 4: Verify value was set
-                    val = await self.page.evaluate(f"""
-                        document.querySelector("input[placeholder='{placeholder}']")?.value || 'EMPTY'
-                    """)
-                    logger.info(f"[{label}] Input value after click: {val}")
-
-                    if val and val not in ('EMPTY', '', placeholder):
-                        logger.info(f"✓ [{label}] Confirmed: {val}")
-                        return True
-
-                    # Step 5: If clicking didn't update Angular model, try triggering Angular directly
-                    logger.warning(f"[{label}] Click didn't set value, trying Angular model update...")
-                    await self.page.evaluate(f"""
-                        (() => {{
-                            const input = document.querySelector("input[placeholder='{placeholder}']");
-                            if (!input) return;
-
-                            // Try Angular ngZone approach
-                            const ngEl = input.closest('[_ngcontent-ng-c*]') || input.closest('[ng-reflect-*]') || input;
-
-                            // Set value via native setter
-                            const setter = Object.getOwnPropertyDescriptor(
-                                window.HTMLInputElement.prototype, 'value'
-                            ).set;
-                            setter.call(input, '{option_text}');
-
-                            // Fire all possible events Angular might listen to
-                            input.dispatchEvent(new Event('input', {{bubbles: true}}));
-                            input.dispatchEvent(new Event('change', {{bubbles: true}}));
-                            input.dispatchEvent(new Event('blur', {{bubbles: true}}));
-                            input.dispatchEvent(new KeyboardEvent('keyup', {{bubbles: true}}));
-
-                            // Try to trigger Angular change detection
-                            const scope = window.getAllAngularRootElements?.();
-                            if (scope && scope[0]) {{
-                                try {{
-                                    const ng = window.ng;
-                                    if (ng) {{
-                                        const component = ng.getComponent(scope[0]);
-                                    }}
-                                }} catch(e) {{}}
-                            }}
-
-                            // Hide dropdown
-                            const menu = input.closest('.dropdown')?.querySelector('.dropdown-menu');
-                            if (menu) {{
-                                menu.classList.remove('show');
-                                menu.style.display = 'none';
-                            }}
-                        }})()
-                    """)
-                    await asyncio.sleep(2)
-
-                    val = await self.page.evaluate(f"""
-                        document.querySelector("input[placeholder='{placeholder}']")?.value || 'EMPTY'
-                    """)
-                    logger.info(f"[{label}] Value after Angular force: {val}")
-
-                    if val and val not in ('EMPTY', '', placeholder):
-                        logger.info(f"✓ [{label}] Confirmed (forced): {val}")
-                        return True
-
-                    logger.warning(f"[{label}] Attempt {attempt + 1} failed, retrying...")
-                    await self.page.evaluate("document.body.click()")
-                    await asyncio.sleep(2)
-
-                logger.error(f"[{label}] Failed after 5 attempts")
-                # Debug dump
-                debug = await self.page.evaluate(f"""
-                    (() => {{
-                        const input = document.querySelector("input[placeholder='{placeholder}']");
-                        const dropdown = input?.closest('.dropdown');
-                        return dropdown ? dropdown.outerHTML : 'NO DROPDOWN';
-                    }})()
-                """)
-                logger.error(f"[{label}] Debug HTML: {str(debug)[:1500]}")
-                return False
-
-            # ── Select Language ──
-            if not await _select_dropdown("-- Select Language --", language, "Language"):
-                return False
-
-            # ── Wait for country dropdown ──
-            country_ready = False
-            for i in range(10):
-                country_ready = await self.page.evaluate(
-                    "document.querySelector(\"input[placeholder='-- Select Country --']\") !== null"
-                )
-                if country_ready:
-                    logger.info("✓ Country dropdown available")
-                    break
-                logger.info(f"Waiting for country dropdown ({i+1}/10)...")
-                await asyncio.sleep(1)
-
-            if not country_ready:
-                logger.error("Country dropdown never appeared after language selection")
-                return False
-
-            await asyncio.sleep(1)
-
-            # ── Select Country ──
-            if not await _select_dropdown("-- Select Country --", country, "Country"):
-                return False
-
+            await self.page.send(cdp.input_.dispatch_mouse_event(
+                type_="mousePressed", x=float(ix), y=float(iy),
+                button=cdp.input_.MouseButton("left"), click_count=1
+            ))
+            await asyncio.sleep(0.05)
+            await self.page.send(cdp.input_.dispatch_mouse_event(
+                type_="mouseReleased", x=float(ix), y=float(iy),
+                button=cdp.input_.MouseButton("left"), click_count=1
+            ))
             await asyncio.sleep(2)
 
-            # ── Wait for and click Book Appointment ──
-            all_links = await self.page.evaluate("""
-                Array.from(document.querySelectorAll("a"))
-                    .map(a => a.textContent.trim())
-                    .filter(t => t.length > 0)
+            # DIAGNOSTIC: Dump EVERYTHING about dropdowns on the page
+            diag = await self.page.evaluate("""
+                (() => {
+                    const results = {};
+                    
+                    // 1. All dropdown-menu elements
+                    const menus = document.querySelectorAll('.dropdown-menu');
+                    results.menuCount = menus.length;
+                    results.menus = [];
+                    menus.forEach((menu, i) => {
+                        const style = window.getComputedStyle(menu);
+                        const rect = menu.getBoundingClientRect();
+                        results.menus.push({
+                            index: i,
+                            display: style.display,
+                            visibility: style.visibility,
+                            height: rect.height,
+                            innerHTML: menu.innerHTML.substring(0, 500),
+                            childCount: menu.children.length,
+                            aCount: menu.querySelectorAll('a').length,
+                            liCount: menu.querySelectorAll('li').length,
+                            allText: menu.textContent.substring(0, 200)
+                        });
+                    });
+                    
+                    // 2. All <a> tags on page
+                    const allAs = document.querySelectorAll('a');
+                    results.totalAnchorCount = allAs.length;
+                    results.anchorTexts = Array.from(allAs).map(a => ({
+                        text: a.textContent.trim(),
+                        visible: a.offsetHeight > 0,
+                        parent: a.parentElement?.tagName,
+                        grandparent: a.parentElement?.parentElement?.tagName
+                    }));
+                    
+                    // 3. The specific dropdown container
+                    const input = document.querySelector("input[placeholder='-- Select Language --']");
+                    const dropdown = input?.closest('.dropdown');
+                    if (dropdown) {
+                        results.dropdownHTML = dropdown.outerHTML.substring(0, 1000);
+                        results.dropdownChildren = dropdown.children.length;
+                    }
+                    
+                    // 4. Check aria-expanded
+                    results.ariaExpanded = input?.getAttribute('aria-expanded');
+                    
+                    return results;
+                })()
             """)
-            logger.info(f"All links on page: {all_links}")
+            logger.info(f"=== DIAGNOSTIC DUMP ===")
+            logger.info(f"{json.dumps(diag, indent=2, default=str)}")
+            logger.info(f"=== END DIAGNOSTIC ===")
 
-            if "schedule" not in self.page.url:
-                logger.info("Waiting for Book Appointment button...")
-                for _ in range(15):
-                    found = await self.page.evaluate("""
-                        Array.from(document.querySelectorAll("a")).some(
-                            a => a.textContent.trim().toLowerCase().includes('book')
-                        )
-                    """)
-                    if found:
-                        logger.info("Book button found!")
-                        break
-                    logger.info("Book button not yet visible, waiting...")
-                    await asyncio.sleep(2)
-
-                # Click book button with CDP
-                book_coords = await self.page.evaluate("""
-                    (() => {
-                        const links = document.querySelectorAll("a");
-                        for (const a of links) {
-                            if (a.textContent.trim().toLowerCase().includes('book')) {
-                                const rect = a.getBoundingClientRect();
-                                return {x: rect.x + rect.width/2, y: rect.y + rect.height/2};
-                            }
-                        }
-                        return null;
-                    })()
-                """)
-                if book_coords:
-                    if isinstance(book_coords, list):
-                        bx = next(v[1] if isinstance(v[1], (int, float)) else v[1].get('value', 0) for v in book_coords if v[0] == 'x')
-                        by = next(v[1] if isinstance(v[1], (int, float)) else v[1].get('value', 0) for v in book_coords if v[0] == 'y')
-                    else:
-                        bx = book_coords.get('x', 0)
-                        by = book_coords.get('y', 0)
-                    logger.info(f"Clicking Book Appointment at ({bx}, {by})")
-                    await _cdp_click(float(bx), float(by))
-                else:
-                    logger.warning("Book button not found, trying JS click...")
-                    await self.page.evaluate("""
-                        const links = document.querySelectorAll("a");
-                        for (const a of links) {
-                            if (a.textContent.trim().toLowerCase().includes('book')) {
-                                a.click();
-                                break;
-                            }
-                        }
-                    """)
-
-                await asyncio.sleep(5)
-                logger.info(f"URL after book click: {self.page.url}")
-
-            if "schedule" in self.page.url:
-                logger.info("Successfully navigated to schedule page")
-                return True
-
-            await asyncio.sleep(3)
-            if "schedule" in self.page.url:
-                logger.info("Successfully navigated to schedule page (delayed)")
-                return True
-
-            logger.warning(f"Expected schedule page, got: {self.page.url}")
-            return True
+            # Don't proceed - just return False so we can see the diagnostic
+            return False
 
         except Exception as e:
             logger.error(f"Landing page navigation failed: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     async def _get_captcha_image(self) -> Optional[str]:
