@@ -474,7 +474,7 @@ chrome.webRequest.onAuthRequired.addListener(
     # Navigation
     # ========================================
 
-    async def navigate_landing_page(self, country: str, language: str = "English") -> bool:
+   async def navigate_landing_page(self, country: str, language: str = "English") -> bool:
         logger.info(f"Navigating landing page - Language: {language}, Country: {country}")
 
         try:
@@ -503,7 +503,7 @@ chrome.webRequest.onAuthRequired.addListener(
                 """)
                 logger.info(f"Angular check {i+1}: {result}")
                 has_lang_input = any(
-                    item[1].get('value') for item in result 
+                    item[1].get('value') for item in result
                     if item[0] == 'hasLangInput'
                 )
                 if has_lang_input:
@@ -518,62 +518,155 @@ chrome.webRequest.onAuthRequired.addListener(
                 logger.info(f"Full HTML ({len(full_html)} chars): {full_html[:2000]}")
                 return False
 
-            # Select language (with retry until confirmed)
+            # ── Select language (with retry until confirmed) ──
             language_selected = False
             for lang_attempt in range(5):
                 logger.info(f"Selecting language (attempt {lang_attempt + 1}/5)...")
-                await self.page.evaluate("""
-                    const input = document.querySelector("input[placeholder='-- Select Language --']");
-                    if (input) {
-                        input.click();
-                        input.dispatchEvent(new Event('click', {bubbles: true}));
-                    }
-                """)
-                await asyncio.sleep(1)
-                await self.page.evaluate("""
-                    const links = document.querySelectorAll("ul.dropdown-menu li a");
-                    for (const a of links) {
-                        if (a.textContent.trim() === 'English') {
-                            a.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                            a.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                            a.click();
-                            a.dispatchEvent(new Event('change', {bubbles: true}));
-                            break;
-                        }
-                    }
-                """)
-                await asyncio.sleep(1)
 
-                await self.page.evaluate("document.body.click()")
-                await asyncio.sleep(1)
+                # Strategy 1: nodriver native click + type to filter
+                try:
+                    lang_input = await self._wait_for("input[placeholder='-- Select Language --']", timeout=5)
+                    if lang_input:
+                        await lang_input.click()
+                        await asyncio.sleep(1)
 
+                        # Dump what dropdown items are visible after click
+                        dropdown_items = await self.page.evaluate("""
+                            (() => {
+                                const items = document.querySelectorAll(
+                                    "ul.dropdown-menu li a, .dropdown-item, [role='option'], .ng-option"
+                                );
+                                return Array.from(items).map(a => a.textContent.trim()).filter(t => t.length > 0);
+                            })()
+                        """)
+                        logger.info(f"Dropdown items after click: {dropdown_items}")
+
+                        # Type to filter/trigger Angular autocomplete
+                        await lang_input.clear_input()
+                        await lang_input.send_keys("English")
+                        await asyncio.sleep(1)
+
+                        # Try clicking the matching option with multiple selectors
+                        click_result = await self.page.evaluate("""
+                            (() => {
+                                const selectors = [
+                                    "ul.dropdown-menu li a",
+                                    ".dropdown-item",
+                                    "[role='option']",
+                                    ".ng-option",
+                                    "li a"
+                                ];
+                                for (const sel of selectors) {
+                                    const items = document.querySelectorAll(sel);
+                                    for (const item of items) {
+                                        if (item.textContent.trim().toLowerCase().includes('english')) {
+                                            item.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                            item.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                            item.click();
+                                            return 'clicked:' + sel;
+                                        }
+                                    }
+                                }
+                                return 'not_found';
+                            })()
+                        """)
+                        logger.info(f"Language option click result: {click_result}")
+                        await asyncio.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Strategy 1 (native click+type) failed: {e}")
+
+                # Check if it worked
                 lang_val = await self.page.evaluate("""
                     document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
                 """)
-                logger.info(f"Language input value: {lang_val}")
 
                 if lang_val and lang_val not in ('EMPTY', '', '-- Select Language --'):
                     language_selected = True
                     logger.info(f"✓ Language confirmed: {lang_val}")
                     break
 
-                logger.warning(f"Language not selected yet (got: '{lang_val}'), retrying...")
+                # Strategy 2: force value via native setter + Angular change detection
+                logger.warning(f"Language not set (got: '{lang_val}'), trying native value setter...")
+                await self.page.evaluate("""
+                    (() => {
+                        const input = document.querySelector("input[placeholder='-- Select Language --']");
+                        if (!input) return 'no_input';
+                        const setter = Object.getOwnPropertyDescriptor(
+                            window.HTMLInputElement.prototype, 'value'
+                        ).set;
+                        setter.call(input, 'English');
+                        input.dispatchEvent(new Event('input', {bubbles: true}));
+                        input.dispatchEvent(new Event('change', {bubbles: true}));
+                        input.dispatchEvent(new Event('blur', {bubbles: true}));
+                        // Also try triggering Angular's ngModelChange
+                        input.dispatchEvent(new Event('ngModelChange', {bubbles: true}));
+                        return 'value_forced';
+                    })()
+                """)
+                await asyncio.sleep(2)
+
+                lang_val = await self.page.evaluate("""
+                    document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
+                """)
+
+                if lang_val and lang_val not in ('EMPTY', '', '-- Select Language --'):
+                    language_selected = True
+                    logger.info(f"✓ Language confirmed (forced): {lang_val}")
+                    break
+
+                # Strategy 3: use nodriver find() with text matching
+                try:
+                    logger.warning("Trying nodriver find() for English option...")
+                    lang_input_el = await self._wait_for("input[placeholder='-- Select Language --']", timeout=3)
+                    if lang_input_el:
+                        await lang_input_el.click()
+                        await asyncio.sleep(1)
+                    eng_option = await self.page.find("English", timeout=3)
+                    if eng_option:
+                        await eng_option.click()
+                        logger.info("Clicked 'English' via nodriver find()")
+                        await asyncio.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Strategy 3 (nodriver find) failed: {e}")
+
+                # Final check for this attempt
+                lang_val = await self.page.evaluate("""
+                    document.querySelector("input[placeholder='-- Select Language --']")?.value || 'EMPTY'
+                """)
+                if lang_val and lang_val not in ('EMPTY', '', '-- Select Language --'):
+                    language_selected = True
+                    logger.info(f"✓ Language confirmed (find): {lang_val}")
+                    break
+
+                logger.warning(f"Language attempt {lang_attempt + 1} failed (value: '{lang_val}'), retrying...")
+                # Close any open dropdown before retry
+                await self.page.evaluate("document.body.click()")
                 await asyncio.sleep(2)
 
             if not language_selected:
                 logger.error("Failed to select language after 5 attempts")
+                # Dump surrounding HTML for debug
+                debug_html = await self.page.evaluate("""
+                    (() => {
+                        const input = document.querySelector("input[placeholder='-- Select Language --']");
+                        if (!input) return 'INPUT NOT FOUND';
+                        const parent = input.closest('.form-group') || input.parentElement?.parentElement || input.parentElement;
+                        return parent ? parent.outerHTML : input.outerHTML;
+                    })()
+                """)
+                logger.error(f"Language dropdown HTML: {debug_html[:2000]}")
                 return False
 
-            # Wait for country dropdown (only appears after language is selected)
+            # ── Wait for country dropdown (only appears after language is selected) ──
             country_ready = False
-            for _ in range(10):
+            for i in range(10):
                 country_ready = await self.page.evaluate(
                     "document.querySelector(\"input[placeholder='-- Select Country --']\") !== null"
                 )
                 if country_ready:
                     logger.info("✓ Country dropdown available")
                     break
-                logger.info("Waiting for country dropdown...")
+                logger.info(f"Waiting for country dropdown ({i+1}/10)...")
                 await asyncio.sleep(1)
 
             if not country_ready:
@@ -581,35 +674,102 @@ chrome.webRequest.onAuthRequired.addListener(
                 return False
 
             await asyncio.sleep(1)
-            # Select country
-            logger.info(f"Selecting country: {country}")
-            await self.page.evaluate("""
-                const input = document.querySelector("input[placeholder='-- Select Country --']");
-                if (input) {
-                    input.click();
-                    input.dispatchEvent(new Event('click', {bubbles: true}));
-                }
-            """)
-            await asyncio.sleep(1)
-            await self.page.evaluate(f"""
-                const links = document.querySelectorAll("ul.dropdown-menu li a");
-                for (const a of links) {{
-                    if (a.textContent.trim() === '{country}') {{
-                        a.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
-                        a.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
-                        a.click();
-                        a.dispatchEvent(new Event('change', {{bubbles: true}}));
-                        break;
-                    }}
-                }}
-            """)
+
+            # ── Select country (same multi-strategy approach) ──
+            country_selected = False
+            for country_attempt in range(5):
+                logger.info(f"Selecting country: {country} (attempt {country_attempt + 1}/5)...")
+
+                try:
+                    country_input = await self._wait_for("input[placeholder='-- Select Country --']", timeout=5)
+                    if country_input:
+                        await country_input.click()
+                        await asyncio.sleep(1)
+
+                        dropdown_items = await self.page.evaluate("""
+                            (() => {
+                                const items = document.querySelectorAll(
+                                    "ul.dropdown-menu li a, .dropdown-item, [role='option'], .ng-option"
+                                );
+                                return Array.from(items).map(a => a.textContent.trim()).filter(t => t.length > 0);
+                            })()
+                        """)
+                        logger.info(f"Country dropdown items: {dropdown_items}")
+
+                        await country_input.clear_input()
+                        await country_input.send_keys(country)
+                        await asyncio.sleep(1)
+
+                        click_result = await self.page.evaluate(f"""
+                            (() => {{
+                                const selectors = [
+                                    "ul.dropdown-menu li a",
+                                    ".dropdown-item",
+                                    "[role='option']",
+                                    ".ng-option",
+                                    "li a"
+                                ];
+                                for (const sel of selectors) {{
+                                    const items = document.querySelectorAll(sel);
+                                    for (const item of items) {{
+                                        if (item.textContent.trim() === '{country}') {{
+                                            item.dispatchEvent(new MouseEvent('mousedown', {{bubbles: true}}));
+                                            item.dispatchEvent(new MouseEvent('mouseup', {{bubbles: true}}));
+                                            item.click();
+                                            return 'clicked:' + sel;
+                                        }}
+                                    }}
+                                }}
+                                return 'not_found';
+                            }})()
+                        """)
+                        logger.info(f"Country option click result: {click_result}")
+                        await asyncio.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Country strategy 1 failed: {e}")
+
+                country_val = await self.page.evaluate("""
+                    document.querySelector("input[placeholder='-- Select Country --']")?.value || 'EMPTY'
+                """)
+
+                if country_val and country_val not in ('EMPTY', '', '-- Select Country --'):
+                    country_selected = True
+                    logger.info(f"✓ Country confirmed: {country_val}")
+                    break
+
+                # Fallback: nodriver find()
+                try:
+                    logger.warning("Trying nodriver find() for country option...")
+                    country_input_el = await self._wait_for("input[placeholder='-- Select Country --']", timeout=3)
+                    if country_input_el:
+                        await country_input_el.click()
+                        await asyncio.sleep(1)
+                    country_option = await self.page.find(country, timeout=3)
+                    if country_option:
+                        await country_option.click()
+                        logger.info(f"Clicked '{country}' via nodriver find()")
+                        await asyncio.sleep(1)
+                except Exception as e:
+                    logger.warning(f"Country nodriver find() failed: {e}")
+
+                country_val = await self.page.evaluate("""
+                    document.querySelector("input[placeholder='-- Select Country --']")?.value || 'EMPTY'
+                """)
+                if country_val and country_val not in ('EMPTY', '', '-- Select Country --'):
+                    country_selected = True
+                    logger.info(f"✓ Country confirmed (find): {country_val}")
+                    break
+
+                await self.page.evaluate("document.body.click()")
+                await asyncio.sleep(2)
+
+            if not country_selected:
+                logger.error(f"Failed to select country '{country}' after 5 attempts")
+                return False
+
             await asyncio.sleep(2)
 
-            country_val = await self.page.evaluate("""
-                document.querySelector("input[placeholder='-- Select Country --']")?.value || 'EMPTY'
-            """)
-            logger.info(f"Country input value after selection: {country_val}")
-
+            # ── Wait for and click Book Appointment ──
             all_links = await self.page.evaluate("""
                 Array.from(document.querySelectorAll("a"))
                     .map(a => a.textContent.trim())
@@ -617,7 +777,6 @@ chrome.webRequest.onAuthRequired.addListener(
             """)
             logger.info(f"All links on page: {all_links}")
 
-            # Wait for and click Book Appointment
             if "schedule" not in self.page.url:
                 logger.info("Waiting for Book Appointment button...")
                 for _ in range(15):
@@ -632,19 +791,29 @@ chrome.webRequest.onAuthRequired.addListener(
                     logger.info("Book button not yet visible, waiting...")
                     await asyncio.sleep(2)
 
-                logger.info("Clicking Book Appointment button via JS...")
-                await self.page.evaluate("""
-                    const links = document.querySelectorAll("a");
-                    for (const a of links) {
-                        if (a.textContent.trim().toLowerCase().includes('book')) {
-                            a.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
-                            a.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
-                            a.click();
-                            break;
+                # Try nodriver find() first for the book button
+                try:
+                    book_btn = await self.page.find("Book Appointment", timeout=3)
+                    if book_btn:
+                        await book_btn.click()
+                        logger.info("Clicked Book Appointment via nodriver find()")
+                        await asyncio.sleep(5)
+                except Exception:
+                    # Fallback to JS click
+                    logger.info("Clicking Book Appointment button via JS...")
+                    await self.page.evaluate("""
+                        const links = document.querySelectorAll("a");
+                        for (const a of links) {
+                            if (a.textContent.trim().toLowerCase().includes('book')) {
+                                a.dispatchEvent(new MouseEvent('mousedown', {bubbles: true}));
+                                a.dispatchEvent(new MouseEvent('mouseup', {bubbles: true}));
+                                a.click();
+                                break;
+                            }
                         }
-                    }
-                """)
-                await asyncio.sleep(5)
+                    """)
+                    await asyncio.sleep(5)
+
                 logger.info(f"URL after book click: {self.page.url}")
 
             if "schedule" in self.page.url:
@@ -662,7 +831,7 @@ chrome.webRequest.onAuthRequired.addListener(
         except Exception as e:
             logger.error(f"Landing page navigation failed: {e}")
             return False
-
+            
     async def _get_captcha_image(self) -> Optional[str]:
         try:
             img_element = await self._wait_for(selectors.CAPTCHA_IMAGE)
