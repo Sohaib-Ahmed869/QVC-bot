@@ -207,7 +207,6 @@ chrome.webRequest.onAuthRequired.addListener(
     async def start(self):
         logger.info("Starting browser...")
 
-        # Minimal flags — won't break Angular JS rendering
         browser_args = [
             "--no-sandbox",
             "--disable-setuid-sandbox",
@@ -219,7 +218,6 @@ chrome.webRequest.onAuthRequired.addListener(
             "--disable-gpu",
         ]
 
-        # Linux/Docker only — do NOT add --single-process, it breaks Angular
         if platform.system() != "Windows":
             browser_args += [
                 "--no-zygote",
@@ -282,7 +280,6 @@ chrome.webRequest.onAuthRequired.addListener(
                         timeout=30
                     )
 
-                    # Give Angular more time to boot
                     await asyncio.sleep(8)
 
                     try:
@@ -495,7 +492,6 @@ chrome.webRequest.onAuthRequired.addListener(
                             return true;
                         }}
                     }}
-                    // Fallback: partial match
                     for (const a of anchors) {{
                         if (a.textContent.trim().toLowerCase().includes(text.toLowerCase())) {{
                             a.click();
@@ -508,7 +504,6 @@ chrome.webRequest.onAuthRequired.addListener(
 
             if clicked:
                 await asyncio.sleep(0.5)
-                # Safe value verification — input placeholder may change after selection
                 try:
                     value = await self.page.evaluate(f"""
                         (() => {{
@@ -532,74 +527,173 @@ chrome.webRequest.onAuthRequired.addListener(
     # Navigation
     # ========================================
 
-    async def navigate_landing_page(self, country: str, language: str = "English") -> bool:
-        logger.info(f"Navigating landing page - Language: {language}, Country: {country}")
+    async def _select_language_and_country(self, country: str, language: str = "English") -> bool:
+        """
+        Step 1: On BASE_URL (landing) — select language + country.
+        After country click the site auto-navigates to /home.
+        """
+        logger.info(f"Selecting language '{language}' and country '{country}' on landing page...")
 
-        try:
-            if "schedule" in self.page.url:
-                logger.info("Already on schedule page, skipping landing navigation")
+        for i in range(20):
+            has_lang = await self.page.evaluate(
+                "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
+            )
+            if has_lang:
+                logger.info(f"Landing page ready after {i + 1} checks")
+                break
+            await asyncio.sleep(2)
+        else:
+            logger.error("Language dropdown never appeared on landing page")
+            return False
+
+        if not await self._select_bs_dropdown("-- Select Language --", language):
+            logger.error(f"Failed to select language: {language}")
+            return False
+        logger.info(f"Language selected: {language}")
+        await asyncio.sleep(1)
+
+        if not await self._select_bs_dropdown("-- Select Country --", country):
+            logger.error(f"Failed to select country: {country}")
+            return False
+        logger.info(f"Country selected: {country} — waiting for auto-navigation to /home...")
+
+        # Wait until we land on /home
+        for i in range(15):
+            await asyncio.sleep(1)
+            if "/home" in self.page.url:
+                logger.info(f"✓ Arrived at /home after {i + 1}s")
                 return True
 
-            await self.page.get(config.BASE_URL)
-            await asyncio.sleep(3)
+        logger.warning(f"Did not reach /home after 15s (current: {self.page.url}) — continuing anyway")
+        return True
 
-            # Wait for Angular + Bootstrap dropdowns to render
-            for i in range(20):
-                has_lang = await self.page.evaluate(
-                    "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
-                )
-                if has_lang:
-                    logger.info(f"Page ready after {i + 1} checks")
-                    break
-                await asyncio.sleep(2)
-            else:
-                logger.error("Language dropdown never appeared")
-                return False
+    async def _navigate_to_schedule(self) -> bool:
+        """
+        Step 2: On /home — click the visible 'Book Appointment' card link to go to /schedule.
+        From HTML: <a class="card-box" href="/schedule"> Book Appointment </a>
+        """
+        logger.info("Clicking 'Book Appointment' on /home to navigate to /schedule...")
 
-            # ── Step 1: Select Language ──────────────────────────────────────
-            if not await self._select_bs_dropdown("-- Select Language --", language):
-                logger.error(f"Failed to select language: {language}")
-                return False
-            logger.info(f"Language selected: {language}")
+        clicked = await self.page.evaluate("""
+            (() => {
+                // Prefer the banner card link (most prominent, always visible)
+                const links = document.querySelectorAll('a[href="/schedule"]');
+                for (const a of links) {
+                    if (a.offsetParent !== null) {
+                        a.click();
+                        return true;
+                    }
+                }
+                return false;
+            })()
+        """)
+
+        if not clicked:
+            logger.error("Could not find visible 'Book Appointment' link on /home")
+            return False
+
+        for i in range(15):
             await asyncio.sleep(1)
+            if "/schedule" in self.page.url:
+                logger.info(f"✓ Arrived at /schedule after {i + 1}s")
+                await asyncio.sleep(2)  # let Angular fully render the form
+                return True
 
-            # ── Step 2: Select Country ───────────────────────────────────────
-            # After country selection, the page navigates automatically —
-            # no proceed button needed.
-            if not await self._select_bs_dropdown("-- Select Country --", country):
-                logger.error(f"Failed to select country: {country}")
-                return False
-            logger.info(f"Country selected: {country} — waiting for auto-navigation...")
+        logger.warning(f"Did not reach /schedule after 15s (current: {self.page.url})")
+        return False
 
-            # Wait for the page to move away from the landing URL
-            for i in range(15):
+    async def _close_schedule_popup(self) -> None:
+        """
+        Step 3: On /schedule — close the attention popup if present.
+        Close button: <img alt="close" src="assets/images/modal-close.svg" class="mod-close">
+        """
+        logger.info("Checking for popup on /schedule...")
+        try:
+            close_img = await self._wait_for("img.mod-close", timeout=5)
+            if close_img:
+                await close_img.click()
+                logger.info("✓ Popup closed (img.mod-close)")
                 await asyncio.sleep(1)
-                current_url = self.page.url
-                if "landing" not in current_url.lower() and current_url != config.BASE_URL:
-                    logger.info(f"Auto-navigated to: {current_url}")
-                    return True
-                # Also accept if the schedule/login form is now visible
-                has_passport = await self.page.evaluate(
-                    "document.querySelector(\"input[id*='passport'], input[placeholder*='assport'], "
-                    "input[placeholder*='isit']\") !== null"
-                )
-                if has_passport:
-                    logger.info(f"Login form detected after country selection (attempt {i + 1})")
-                    return True
+                return
 
-            # If we're still here the page may not have moved but that's okay —
-            # the URL check above is a heuristic. Log and continue.
-            logger.warning(
-                f"Page URL did not change after country selection "
-                f"(current: {self.page.url}) — continuing anyway"
+            # Fallback: any visible close image
+            closed = await self.page.evaluate("""
+                (() => {
+                    const imgs = document.querySelectorAll('img[alt="close"], img.mod-close');
+                    for (const img of imgs) {
+                        if (img.offsetParent !== null) {
+                            img.click();
+                            return true;
+                        }
+                    }
+                    return false;
+                })()
+            """)
+            if closed:
+                logger.info("✓ Popup closed (JS fallback)")
+                await asyncio.sleep(1)
+            else:
+                logger.debug("No popup found on /schedule")
+        except Exception as e:
+            logger.debug(f"Popup close check failed (non-critical): {e}")
+
+    async def navigate_to_booking_form(self, country: str, language: str = "English") -> bool:
+        """
+        Full navigation flow:
+          BASE_URL → select language/country → /home → Book Appointment → /schedule → close popup
+        Returns True when the passport input on /schedule is ready.
+        """
+        logger.info(f"Starting full navigation — Language: {language}, Country: {country}")
+
+        try:
+            # Already on /schedule?
+            if "/schedule" in self.page.url:
+                logger.info("Already on /schedule, skipping navigation")
+                await self._close_schedule_popup()
+                return True
+
+            # Need to go through landing page
+            if "/home" not in self.page.url:
+                await self.page.get(config.BASE_URL)
+                await asyncio.sleep(3)
+                if not await self._select_language_and_country(country, language):
+                    return False
+                await asyncio.sleep(2)
+
+            # Now on /home — click Book Appointment
+            if not await self._navigate_to_schedule():
+                return False
+
+            # On /schedule — close popup
+            await self._close_schedule_popup()
+
+            # Confirm passport input is visible
+            passport_input = await self._wait_for(
+                "input[placeholder='Passport Number']", timeout=10
             )
-            return True
+            if not passport_input:
+                logger.warning("Passport input not immediately visible — waiting a bit more...")
+                await asyncio.sleep(3)
+                passport_input = await self._wait_for(
+                    "input[placeholder='Passport Number']", timeout=10
+                )
+
+            if passport_input:
+                logger.info("✓ Booking form ready — passport input visible")
+                return True
+            else:
+                logger.error("Passport input never appeared on /schedule")
+                return False
 
         except Exception as e:
-            logger.error(f"Landing page navigation failed: {e}")
+            logger.error(f"navigate_to_booking_form failed: {e}")
             import traceback
             traceback.print_exc()
             return False
+
+    # Alias so nothing else breaks
+    async def navigate_landing_page(self, country: str, language: str = "English") -> bool:
+        return await self.navigate_to_booking_form(country, language)
 
     async def _get_captcha_image(self) -> Optional[str]:
         try:
@@ -636,6 +730,7 @@ chrome.webRequest.onAuthRequired.addListener(
     async def _refresh_captcha(self) -> bool:
         try:
             refresh_selectors = [
+                "div.refresh-icon",
                 ".refresh-icon",
                 "[class*='refresh']",
                 "div.captchablock + div",
@@ -786,30 +881,22 @@ chrome.webRequest.onAuthRequired.addListener(
         logger.info(f"Logging in: {applicant.passport_number}")
 
         try:
-            if "schedule" not in self.page.url:
-                if not await self.navigate_landing_page(applicant.country):
-                    logger.error("Failed to navigate landing page")
+            # Full navigation: landing → /home → /schedule
+            if "/schedule" not in self.page.url:
+                if not await self.navigate_to_booking_form(applicant.country):
+                    logger.error("Failed to reach /schedule booking form")
                     return False
 
-            await asyncio.sleep(2)
-
-            try:
-                popup_close = await self._wait_for(selectors.POPUP_CLOSE_BTN, timeout=3)
-                if popup_close:
-                    logger.info("Closing attention popup")
-                    await popup_close.click()
-                    await asyncio.sleep(1)
-            except:
-                pass
+            await asyncio.sleep(1)
 
             logger.info("Filling passport number...")
-            if not await self._type(selectors.PASSPORT_INPUT, applicant.passport_number):
+            if not await self._type("input[placeholder='Passport Number']", applicant.passport_number):
                 if not await self._type_xpath(selectors.PASSPORT_INPUT_XPATH, applicant.passport_number):
                     logger.error("Failed to enter passport number")
                     return False
 
             logger.info("Filling visa number...")
-            if not await self._type(selectors.VISA_INPUT, applicant.visa_number):
+            if not await self._type("input[placeholder='Visa Number']", applicant.visa_number):
                 if not await self._type_xpath(selectors.VISA_INPUT_XPATH, applicant.visa_number):
                     logger.error("Failed to enter visa number")
                     return False
