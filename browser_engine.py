@@ -470,6 +470,57 @@ chrome.webRequest.onAuthRequired.addListener(
             logger.debug(f"XPath type failed: {e}")
             return False
 
+    async def _select_bs_dropdown(self, input_placeholder: str, option_text: str) -> bool:
+        """
+        Selects an option from a plain Bootstrap dropdown.
+        Structure: input[data-bs-toggle=dropdown] + ul.dropdown-menu > li > a
+        The full list is always in the DOM — no typing needed, just click the <a>.
+        """
+        try:
+            input_el = await self._wait_for(f"input[placeholder='{input_placeholder}']")
+            if not input_el:
+                logger.error(f"Dropdown input not found: '{input_placeholder}'")
+                return False
+
+            await input_el.click()
+            await asyncio.sleep(0.6)
+
+            clicked = await self.page.evaluate(f"""
+                (() => {{
+                    const text = {json.dumps(option_text)};
+                    const anchors = document.querySelectorAll('.dropdown-menu li a');
+                    for (const a of anchors) {{
+                        if (a.textContent.trim() === text) {{
+                            a.click();
+                            return true;
+                        }}
+                    }}
+                    // Fallback: partial match
+                    for (const a of anchors) {{
+                        if (a.textContent.trim().toLowerCase().includes(text.toLowerCase())) {{
+                            a.click();
+                            return true;
+                        }}
+                    }}
+                    return false;
+                }})()
+            """)
+
+            if clicked:
+                await asyncio.sleep(0.5)
+                value = await self.page.evaluate(
+                    f"document.querySelector(\"input[placeholder='{input_placeholder}']\").value"
+                )
+                logger.info(f"Dropdown '{input_placeholder}' => '{option_text}', input now: '{value}'")
+                return True
+
+            logger.error(f"Option '{option_text}' not found in '{input_placeholder}' dropdown")
+            return False
+
+        except Exception as e:
+            logger.error(f"_select_bs_dropdown failed for '{input_placeholder}': {e}")
+            return False
+
     # ========================================
     # Navigation
     # ========================================
@@ -485,97 +536,66 @@ chrome.webRequest.onAuthRequired.addListener(
             await self.page.get(config.BASE_URL)
             await asyncio.sleep(3)
 
-            # Wait for Angular
+            # Wait for Angular + Bootstrap dropdowns to render
             for i in range(20):
-                has_input = await self.page.evaluate(
+                has_lang = await self.page.evaluate(
                     "document.querySelector(\"input[placeholder='-- Select Language --']\") !== null"
                 )
-                if has_input:
-                    logger.info(f"Angular ready after {i+1} checks")
+                if has_lang:
+                    logger.info(f"Page ready after {i + 1} checks")
                     break
                 await asyncio.sleep(2)
-
-            # CDP click the input to open dropdown
-            coords = await self.page.evaluate("""
-                (() => {
-                    const input = document.querySelector("input[placeholder='-- Select Language --']");
-                    const rect = input.getBoundingClientRect();
-                    return {x: rect.x + rect.width/2, y: rect.y + rect.height/2};
-                })()
-            """)
-
-            if isinstance(coords, list):
-                ix = next(v[1]['value'] if isinstance(v[1], dict) else v[1] for v in coords if v[0] == 'x')
-                iy = next(v[1]['value'] if isinstance(v[1], dict) else v[1] for v in coords if v[0] == 'y')
             else:
-                ix, iy = coords['x'], coords['y']
+                logger.error("Language dropdown never appeared")
+                return False
 
-            await self.page.send(cdp.input_.dispatch_mouse_event(
-                type_="mousePressed", x=float(ix), y=float(iy),
-                button=cdp.input_.MouseButton("left"), click_count=1
-            ))
-            await asyncio.sleep(0.05)
-            await self.page.send(cdp.input_.dispatch_mouse_event(
-                type_="mouseReleased", x=float(ix), y=float(iy),
-                button=cdp.input_.MouseButton("left"), click_count=1
-            ))
-            await asyncio.sleep(2)
+            # ── Step 1: Select Language ──────────────────────────────────────────
+            if not await self._select_bs_dropdown("-- Select Language --", language):
+                logger.error(f"Failed to select language: {language}")
+                return False
+            logger.info(f"Language selected: {language}")
+            await asyncio.sleep(1)
 
-            # DIAGNOSTIC: Dump EVERYTHING about dropdowns on the page
-            diag = await self.page.evaluate("""
-                (() => {
-                    const results = {};
-                    
-                    // 1. All dropdown-menu elements
-                    const menus = document.querySelectorAll('.dropdown-menu');
-                    results.menuCount = menus.length;
-                    results.menus = [];
-                    menus.forEach((menu, i) => {
-                        const style = window.getComputedStyle(menu);
-                        const rect = menu.getBoundingClientRect();
-                        results.menus.push({
-                            index: i,
-                            display: style.display,
-                            visibility: style.visibility,
-                            height: rect.height,
-                            innerHTML: menu.innerHTML.substring(0, 500),
-                            childCount: menu.children.length,
-                            aCount: menu.querySelectorAll('a').length,
-                            liCount: menu.querySelectorAll('li').length,
-                            allText: menu.textContent.substring(0, 200)
-                        });
-                    });
-                    
-                    // 2. All <a> tags on page
-                    const allAs = document.querySelectorAll('a');
-                    results.totalAnchorCount = allAs.length;
-                    results.anchorTexts = Array.from(allAs).map(a => ({
-                        text: a.textContent.trim(),
-                        visible: a.offsetHeight > 0,
-                        parent: a.parentElement?.tagName,
-                        grandparent: a.parentElement?.parentElement?.tagName
-                    }));
-                    
-                    // 3. The specific dropdown container
-                    const input = document.querySelector("input[placeholder='-- Select Language --']");
-                    const dropdown = input?.closest('.dropdown');
-                    if (dropdown) {
-                        results.dropdownHTML = dropdown.outerHTML.substring(0, 1000);
-                        results.dropdownChildren = dropdown.children.length;
-                    }
-                    
-                    // 4. Check aria-expanded
-                    results.ariaExpanded = input?.getAttribute('aria-expanded');
-                    
-                    return results;
-                })()
-            """)
-            logger.info(f"=== DIAGNOSTIC DUMP ===")
-            logger.info(f"{json.dumps(diag, indent=2, default=str)}")
-            logger.info(f"=== END DIAGNOSTIC ===")
+            # ── Step 2: Select Country ───────────────────────────────────────────
+            # Both dropdowns are always in the DOM (confirmed from HTML snapshot)
+            if not await self._select_bs_dropdown("-- Select Country --", country):
+                logger.error(f"Failed to select country: {country}")
+                return False
+            logger.info(f"Country selected: {country}")
+            await asyncio.sleep(1)
 
-            # Don't proceed - just return False so we can see the diagnostic
-            return False
+            # ── Step 3: Click Proceed / Schedule button ──────────────────────────
+            proceed_xpaths = [
+                "//*[contains(text(),'Schedule Appointment')]",
+                "//*[contains(text(),'Proceed')]",
+                "//*[contains(text(),'Continue')]",
+                "//button[@type='submit']",
+            ]
+            clicked = False
+            for xpath in proceed_xpaths:
+                try:
+                    btn = await self.page.find(xpath, timeout=3)
+                    if btn:
+                        await btn.click()
+                        clicked = True
+                        logger.info(f"Proceed button clicked: {xpath}")
+                        break
+                except Exception:
+                    pass
+
+            if not clicked:
+                for sel in ["button[type='submit']", "button.btn-primary", "input[type='submit']"]:
+                    if await self._click(sel):
+                        clicked = True
+                        break
+
+            if not clicked:
+                logger.error("Could not find Proceed/Schedule button")
+                return False
+
+            await asyncio.sleep(4)
+            logger.info(f"Landing page done. Current URL: {self.page.url}")
+            return True
 
         except Exception as e:
             logger.error(f"Landing page navigation failed: {e}")
