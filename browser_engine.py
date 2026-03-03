@@ -508,9 +508,16 @@ chrome.webRequest.onAuthRequired.addListener(
 
             if clicked:
                 await asyncio.sleep(0.5)
-                value = await self.page.evaluate(
-                    f"document.querySelector(\"input[placeholder='{input_placeholder}']\").value"
-                )
+                # Safe value verification — input placeholder may change after selection
+                try:
+                    value = await self.page.evaluate(f"""
+                        (() => {{
+                            const el = document.querySelector("input[placeholder='{input_placeholder}']");
+                            return el ? el.value : '(input not found after selection)';
+                        }})()
+                    """)
+                except Exception:
+                    value = "(verify skipped)"
                 logger.info(f"Dropdown '{input_placeholder}' => '{option_text}', input now: '{value}'")
                 return True
 
@@ -549,52 +556,43 @@ chrome.webRequest.onAuthRequired.addListener(
                 logger.error("Language dropdown never appeared")
                 return False
 
-            # ── Step 1: Select Language ──────────────────────────────────────────
+            # ── Step 1: Select Language ──────────────────────────────────────
             if not await self._select_bs_dropdown("-- Select Language --", language):
                 logger.error(f"Failed to select language: {language}")
                 return False
             logger.info(f"Language selected: {language}")
             await asyncio.sleep(1)
 
-            # ── Step 2: Select Country ───────────────────────────────────────────
-            # Both dropdowns are always in the DOM (confirmed from HTML snapshot)
+            # ── Step 2: Select Country ───────────────────────────────────────
+            # After country selection, the page navigates automatically —
+            # no proceed button needed.
             if not await self._select_bs_dropdown("-- Select Country --", country):
                 logger.error(f"Failed to select country: {country}")
                 return False
-            logger.info(f"Country selected: {country}")
-            await asyncio.sleep(1)
+            logger.info(f"Country selected: {country} — waiting for auto-navigation...")
 
-            # ── Step 3: Click Proceed / Schedule button ──────────────────────────
-            proceed_xpaths = [
-                "//*[contains(text(),'Schedule Appointment')]",
-                "//*[contains(text(),'Proceed')]",
-                "//*[contains(text(),'Continue')]",
-                "//button[@type='submit']",
-            ]
-            clicked = False
-            for xpath in proceed_xpaths:
-                try:
-                    btn = await self.page.find(xpath, timeout=3)
-                    if btn:
-                        await btn.click()
-                        clicked = True
-                        logger.info(f"Proceed button clicked: {xpath}")
-                        break
-                except Exception:
-                    pass
+            # Wait for the page to move away from the landing URL
+            for i in range(15):
+                await asyncio.sleep(1)
+                current_url = self.page.url
+                if "landing" not in current_url.lower() and current_url != config.BASE_URL:
+                    logger.info(f"Auto-navigated to: {current_url}")
+                    return True
+                # Also accept if the schedule/login form is now visible
+                has_passport = await self.page.evaluate(
+                    "document.querySelector(\"input[id*='passport'], input[placeholder*='assport'], "
+                    "input[placeholder*='isit']\") !== null"
+                )
+                if has_passport:
+                    logger.info(f"Login form detected after country selection (attempt {i + 1})")
+                    return True
 
-            if not clicked:
-                for sel in ["button[type='submit']", "button.btn-primary", "input[type='submit']"]:
-                    if await self._click(sel):
-                        clicked = True
-                        break
-
-            if not clicked:
-                logger.error("Could not find Proceed/Schedule button")
-                return False
-
-            await asyncio.sleep(4)
-            logger.info(f"Landing page done. Current URL: {self.page.url}")
+            # If we're still here the page may not have moved but that's okay —
+            # the URL check above is a heuristic. Log and continue.
+            logger.warning(
+                f"Page URL did not change after country selection "
+                f"(current: {self.page.url}) — continuing anyway"
+            )
             return True
 
         except Exception as e:
@@ -602,7 +600,7 @@ chrome.webRequest.onAuthRequired.addListener(
             import traceback
             traceback.print_exc()
             return False
-    
+
     async def _get_captcha_image(self) -> Optional[str]:
         try:
             img_element = await self._wait_for(selectors.CAPTCHA_IMAGE)
