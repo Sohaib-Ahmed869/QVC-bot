@@ -4,7 +4,7 @@ python-multipart>=0.0.6
 pydantic>=2.5.0
 pydantic[email]>=2.5.0
 pydantic-settings>=2.1.0
-nodriver>=0.38
+nodriver>=0.40
 ddddocr>=1.4.11
 Pillow>=10.2.0
 httpx>=0.27.0
@@ -13,4 +13,5 @@ openpyxl>=3.1.2
 aiofiles>=23.2.1
 python-dotenv>=1.0.0
 boto3>=1.34.0
+motor>=3.3.0
 

@@ -34,8 +34,26 @@
             </div>
         </header>
 
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="operations">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M6 4L14 8L6 12V4Z" fill="currentColor"/>
+                </svg>
+                Operations
+            </button>
+            <button class="tab-btn" data-tab="analytics">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <rect x="2" y="10" width="3" height="4" rx="1" fill="currentColor"/>
+                    <rect x="6.5" y="6" width="3" height="8" rx="1" fill="currentColor"/>
+                    <rect x="11" y="2" width="3" height="12" rx="1" fill="currentColor"/>
+                </svg>
+                Analytics
+            </button>
+        </nav>
+
         <!-- Main Content -->
-        <main class="main-grid">
+        <main class="main-grid" id="tabOperations">
             <!-- Left Panel: Applicants -->
             <section class="panel applicants-panel">
                 <div class="panel-header">
@@ -171,6 +189,55 @@
                 </div>
             </aside>
         </main>
+
+        <!-- Analytics Tab -->
+        <div class="tab-content hidden" id="tabAnalytics">
+            <!-- Stats Summary -->
+            <div class="analytics-stats">
+                <div class="stat-card">
+                    <div class="stat-label">Tries Today</div>
+                    <div class="stat-value" id="statTriesToday">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Sessions Today</div>
+                    <div class="stat-value" id="statSessionsToday">—</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">Slots Found (All Time)</div>
+                    <div class="stat-value" id="statSlotsFound">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Tries (All Time)</div>
+                    <div class="stat-value" id="statTriesTotal">—</div>
+                </div>
+            </div>
+
+            <!-- Per-Applicant Table -->
+            <section class="panel analytics-panel">
+                <div class="panel-header">
+                    <h2>Per-Applicant History</h2>
+                    <button class="btn btn-small btn-secondary" id="refreshAnalyticsBtn">Refresh</button>
+                </div>
+                <div class="analytics-table-wrap">
+                    <table class="analytics-table" id="analyticsTable">
+                        <thead>
+                            <tr>
+                                <th>Passport</th>
+                                <th>Sessions</th>
+                                <th>Total Polls</th>
+                                <th>Slots Found</th>
+                                <th>Last Run</th>
+                                <th>Last Status</th>
+                                <th>Center</th>
+                            </tr>
+                        </thead>
+                        <tbody id="analyticsBody">
+                            <tr><td colspan="7" class="analytics-empty">No data yet — run the bot first.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
 
         <!-- Active Sessions Panel (appears when bot is running) -->
         <section class="panel sessions-panel hidden" id="sessionsPanel">

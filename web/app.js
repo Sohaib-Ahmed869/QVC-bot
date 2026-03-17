@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     checkInitialStatus();
     checkScheduledRun();
+    setupTabs();
 });
 
 function setupEventListeners() {
@@ -77,6 +78,26 @@ function setupEventListeners() {
     document.getElementById('dismissSlotAlert').addEventListener('click', dismissSlotAlert);
 
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    document.getElementById('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
+}
+
+// ============================================
+// Tabs
+// ============================================
+function setupTabs() {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.getElementById('tabOperations').classList.toggle('hidden', tab !== 'operations');
+            document.getElementById('tabAnalytics').classList.toggle('hidden', tab !== 'analytics');
+
+            if (tab === 'analytics') loadAnalytics();
+        });
+    });
 }
 
 // ============================================
@@ -674,4 +695,48 @@ function showMobileError() {
     document.getElementById('mobileHint').classList.add('hidden');
     document.getElementById('mobileError').classList.remove('hidden');
     document.getElementById('mobile').classList.add('input-error-state');
+}
+
+// ============================================
+// Analytics
+// ============================================
+async function loadAnalytics() {
+    try {
+        const response = await fetch(`${API_BASE}/api/analytics`);
+        if (!response.ok) return;
+        const data = await response.json();
+
+        const stats = data.stats || {};
+        const today = stats.today || {};
+        const total = stats.total || {};
+
+        document.getElementById('statTriesToday').textContent = today.tries ?? 0;
+        document.getElementById('statSessionsToday').textContent = today.tries ?? 0;
+        document.getElementById('statSlotsFound').textContent = total.slots_found ?? 0;
+        document.getElementById('statTriesTotal').textContent = total.tries ?? 0;
+
+        const tbody = document.getElementById('analyticsBody');
+        const rows = data.per_applicant || [];
+
+        if (rows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="analytics-empty">No data yet — run the bot first.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = rows.map(r => {
+            const lastRun = r.last_run ? new Date(r.last_run).toLocaleString() : '—';
+            const statusClass = r.last_status ? r.last_status.replace('_', '-') : '';
+            return `<tr>
+                <td class="analytics-passport">${escapeHtml(r.passport_number || '—')}</td>
+                <td>${r.total_tries ?? 0}</td>
+                <td>${r.total_polls ?? 0}</td>
+                <td>${r.slots_found ?? 0}</td>
+                <td class="analytics-date">${lastRun}</td>
+                <td><span class="status-badge ${statusClass}">${formatStatus(r.last_status || 'unknown')}</span></td>
+                <td>${escapeHtml(r.center || '—')}</td>
+            </tr>`;
+        }).join('');
+    } catch (error) {
+        console.error('Failed to load analytics:', error);
+    }
 }

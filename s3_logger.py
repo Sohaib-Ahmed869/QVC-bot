@@ -56,3 +56,25 @@ class S3Logger:
             logger.warning(f"Failed to upload session logs to S3: {e}")
         except Exception as e:
             logger.warning(f"Unexpected error uploading session logs to S3: {e}")
+
+    def list_logs(self, prefix: str = "logs/") -> List[str]:
+        """List all log files available in S3 under the given prefix."""
+        try:
+            response = self._client.list_objects_v2(Bucket=self._bucket, Prefix=prefix)
+            return [obj["Key"] for obj in response.get("Contents", [])]
+        except ClientError as e:
+            logger.error(f"Failed to list logs from S3: {e}")
+            return []
+
+    def download_log(self, key: str, local_path: str) -> bool:
+        """Download a specific log file from S3 to local storage."""
+        try:
+            self._client.download_file(self._bucket, key, local_path)
+            logger.info(f"Downloaded s3://{self._bucket}/{key} to {local_path}")
+            return True
+        except ClientError as e:
+            logger.error(f"Failed to download log from S3: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error downloading log from S3: {e}")
+            return False

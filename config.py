@@ -51,6 +51,9 @@ class Config:
     AWS_ACCESS_KEY_ID: str = os.getenv("AWS_ACCESS_KEY_ID", "")
     AWS_SECRET_ACCESS_KEY: str = os.getenv("AWS_SECRET_ACCESS_KEY", "")
 
+    # MongoDB
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "")
+
 
 @dataclass
 class Applicant:
