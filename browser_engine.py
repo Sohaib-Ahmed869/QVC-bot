@@ -711,10 +711,21 @@ chrome.webRequest.onAuthRequired.addListener(
                 logger.error("CAPTCHA image element not found.")
                 return None
 
-            src = img_element.attrs.get("src")
-            if not src:
-                logger.debug("CAPTCHA src not in attributes, trying eval...")
-                src = await img_element.eval("this.src")
+            # Poll via page.evaluate() until the src is populated with base64 data.
+            # The image src is set asynchronously by JS, so attrs.get("src") may be
+            # empty or missing immediately after the element appears.
+            src = None
+            for _ in range(10):
+                try:
+                    src = await self.page.evaluate(
+                        "document.querySelector('#captchaImage') ? "
+                        "document.querySelector('#captchaImage').src : ''"
+                    )
+                except Exception:
+                    src = None
+                if src and "base64," in src:
+                    break
+                await asyncio.sleep(0.5)
 
             if src and "base64," in src:
                 logger.info("CAPTCHA base64 data extracted successfully.")
