@@ -17,7 +17,10 @@ async def connect():
     if not config.MONGODB_URI:
         raise ValueError("MONGODB_URI is not configured in environment")
     _client = AsyncIOMotorClient(config.MONGODB_URI)
-    _db = _client.get_default_database()
+    try:
+        _db = _client.get_default_database()
+    except Exception:
+        _db = _client["visa_bot"]
     await _db.applicants.create_index("id", unique=True)
     await _db.run_records.create_index([("applicant_id", 1), ("date", -1)])
     logger.info("MongoDB connected")
