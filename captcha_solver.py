@@ -1,5 +1,6 @@
 import base64
 import asyncio
+import io
 import httpx
 from typing import Optional
 import logging
@@ -7,50 +8,87 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _ascii_alnum(s: str) -> str:
+    """Keep only ASCII letters and digits — rejects CJK/unicode garbage."""
+    return ''.join(c for c in s if c.isascii() and c.isalnum())
+
+
+def _preprocess_captcha(image_bytes: bytes) -> bytes:
+    """Grayscale + contrast boost — improves ddddocr accuracy on noisy CAPTCHAs."""
+    try:
+        from PIL import Image, ImageEnhance, ImageFilter
+        img = Image.open(io.BytesIO(image_bytes)).convert('L')
+        img = ImageEnhance.Contrast(img).enhance(2.5)
+        img = img.filter(ImageFilter.SHARPEN)
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        return buf.getvalue()
+    except Exception:
+        return image_bytes  # fall back to original if Pillow unavailable
+
+
 class CaptchaSolver:
     def __init__(self, capsolver_api_key: str):
         self.capsolver_api_key = capsolver_api_key
         self.ocr = None
-        self._client = None  
+        self.ocr_beta = None
+        self._client = None
         self._init_local_ocr()
-    
+
     async def _get_client(self) -> httpx.AsyncClient:
         """Get or create reusable HTTP client"""
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(timeout=30)
         return self._client
-    
+
     async def close(self):
         """Close HTTP client - call on shutdown"""
         if self._client and not self._client.is_closed:
             await self._client.aclose()
             self._client = None
-    
+
     def _init_local_ocr(self):
-        """Initialize ddddocr for local solving"""
+        """Initialize ddddocr (default + beta model) for local solving."""
         try:
             import ddddocr
             self.ocr = ddddocr.DdddOcr(show_ad=False)
+            try:
+                self.ocr_beta = ddddocr.DdddOcr(show_ad=False, beta=True)
+            except Exception:
+                self.ocr_beta = None
             logger.info("Local OCR (ddddocr) initialized")
         except Exception as e:
             logger.warning(f"Failed to initialize ddddocr: {e}")
             self.ocr = None
-    
-    def solve_local(self, image_bytes: bytes) -> Optional[str]:
 
+    def solve_local(self, image_bytes: bytes) -> Optional[str]:
         if not self.ocr:
             logger.warning("Local OCR skipped: ddddocr not initialized")
             return None
-        
-        try:
-            result = self.ocr.classification(image_bytes)
-            # Clean result - remove spaces, ensure alphanumeric
-            result = ''.join(c for c in result if c.isalnum())
-            logger.info(f"Local OCR result: {result}")
-            return result if len(result) >= 4 else None
-        except Exception as e:
-            logger.error(f"Local OCR failed: {e}")
-            return None
+
+        preprocessed = _preprocess_captcha(image_bytes)
+
+        # Try default model on preprocessed image, then original
+        for ocr, img, label in [
+            (self.ocr,      preprocessed,  "default+preprocess"),
+            (self.ocr,      image_bytes,   "default+raw"),
+            (self.ocr_beta, preprocessed,  "beta+preprocess"),
+            (self.ocr_beta, image_bytes,   "beta+raw"),
+        ]:
+            if ocr is None:
+                continue
+            try:
+                raw = ocr.classification(img)
+                cleaned = _ascii_alnum(raw)
+                logger.info(f"Local OCR [{label}]: raw={raw!r} cleaned={cleaned!r}")
+                if len(cleaned) >= 4:
+                    logger.info(f"Local OCR succeeded ({label}): {cleaned}")
+                    return cleaned
+            except Exception as e:
+                logger.debug(f"Local OCR [{label}] error: {e}")
+
+        logger.info("Local OCR: all attempts produced no valid result")
+        return None
     
     async def solve_capsolver(self, image_base64: str) -> Optional[str]:
 

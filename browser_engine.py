@@ -17,6 +17,11 @@ from proxy_manager import ProxyManager, ProxyConfig
 
 logger = logging.getLogger(__name__)
 
+
+class IPBlockedException(Exception):
+    """Raised when the server returns a blocked/empty page (no dropdown options populated).
+    Caught at book_appointment level to trigger proxy rotation + browser restart."""
+
 import platform
 import shutil as _shutil
 
@@ -472,6 +477,7 @@ chrome.webRequest.onAuthRequired.addListener(
         Selects an option from a plain Bootstrap dropdown.
         Structure: input[data-bs-toggle=dropdown] + ul.dropdown-menu > li > a
         The full list is always in the DOM — no typing needed, just click the <a>.
+        Polls up to 5s for options to appear (handles slow JS population and rate-limiting).
         """
         try:
             input_el = await self._wait_for(f"input[placeholder='{input_placeholder}']")
@@ -481,6 +487,31 @@ chrome.webRequest.onAuthRequired.addListener(
 
             await input_el.click()
             await asyncio.sleep(0.6)
+
+            # Poll for options to appear — they may be populated asynchronously
+            # or not at all if the server is rate-limiting this IP.
+            for poll in range(10):
+                option_count = await self.page.evaluate(
+                    "document.querySelectorAll('.dropdown-menu li a').length"
+                )
+                if option_count > 0:
+                    break
+                logger.debug(
+                    f"Dropdown '{input_placeholder}' empty (poll {poll + 1}/10), waiting..."
+                )
+                await asyncio.sleep(0.5)
+            else:
+                # Log what the page actually contains to help diagnose blocking
+                body_snippet = await self.page.evaluate(
+                    "document.body ? document.body.innerText.slice(0, 300) : '(no body)'"
+                )
+                logger.warning(
+                    f"Dropdown '{input_placeholder}' has no options after 5s — "
+                    f"server likely blocked this IP. Page: {body_snippet!r}"
+                )
+                raise IPBlockedException(
+                    f"Dropdown '{input_placeholder}' returned no options — IP blocked by server"
+                )
 
             clicked = await self.page.evaluate(f"""
                 (() => {{
@@ -531,6 +562,7 @@ chrome.webRequest.onAuthRequired.addListener(
         """
         Step 1: On BASE_URL (landing) — select language + country.
         After country click the site auto-navigates to /home.
+        Raises IPBlockedException if the server returns no dropdown options (IP blocked).
         """
         logger.info(f"Selecting language '{language}' and country '{country}' on landing page...")
 
@@ -546,6 +578,7 @@ chrome.webRequest.onAuthRequired.addListener(
             logger.error("Language dropdown never appeared on landing page")
             return False
 
+        # IPBlockedException propagates up from _select_bs_dropdown if options are empty
         if not await self._select_bs_dropdown("-- Select Language --", language):
             logger.error(f"Failed to select language: {language}")
             return False
@@ -557,7 +590,6 @@ chrome.webRequest.onAuthRequired.addListener(
             return False
         logger.info(f"Country selected: {country} — waiting for auto-navigation to /home...")
 
-        # Wait until we land on /home
         for i in range(15):
             await asyncio.sleep(1)
             if "/home" in self.page.url:
@@ -1225,6 +1257,16 @@ chrome.webRequest.onAuthRequired.addListener(
                 logger.info("=" * 60)
 
                 return True
+
+            except IPBlockedException as e:
+                logger.warning(f"IP blocked by server on attempt {retry + 1}: {e}")
+                if self.proxy_manager:
+                    logger.info("Rotating proxy and restarting browser with new IP...")
+                    await self.restart_with_new_ip()
+                    logger.info("✓ Browser restarted — retrying with new IP")
+                else:
+                    logger.error("No proxy configured — cannot rotate IP, aborting")
+                    return False
 
             except Exception as e:
                 logger.error(f"Detection attempt {retry + 1} failed with exception: {e}")
