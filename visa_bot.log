@@ -432,3 +432,15 @@ arguments:
 2026-03-17 12:05:53,351 | INFO     | web_server | [Bot] All sessions force stopped
 2026-03-17 12:05:53,466 | INFO     | db | MongoDB disconnected
 2026-03-17 12:05:53,466 | INFO     | web_server | Shutdown complete
+2026-03-19 07:55:06,516 | INFO     | __main__ | S3 session logging enabled
+2026-03-19 07:55:06,518 | INFO     | __main__ | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-03-19 07:55:06,710 | INFO     | web_server | S3 session logging enabled
+2026-03-19 07:55:06,711 | INFO     | web_server | Serving static files from: C:\Work\Core\Qatar-Visa-bot\web
+2026-03-19 07:55:09,067 | INFO     | db | MongoDB connected
+2026-03-19 07:55:09,424 | INFO     | web_server | Scheduler started
+2026-03-19 07:55:09,424 | INFO     | web_server | Qatar Visa Bot Web Server is ready (Parallel Mode)
+2026-03-19 07:55:34,414 | INFO     | web_server | Shutting down - cleaning up...
+2026-03-19 07:55:34,415 | INFO     | web_server | Force stop initiated for all sessions
+2026-03-19 07:55:34,415 | INFO     | web_server | [Bot] All sessions force stopped
+2026-03-19 07:55:34,572 | INFO     | db | MongoDB disconnected
+2026-03-19 07:55:34,572 | INFO     | web_server | Shutdown complete
